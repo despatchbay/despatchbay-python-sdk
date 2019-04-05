@@ -15,15 +15,16 @@ class Shipment(Entity):
         for item in parcels:
             parcel_list.append(item.get_soap_object())
         parcel_array.item = parcel_list
+        #todo: "SOMETHING" more appropriate
         parcel_array._arrayType = "SOMETHING"
-
         self.suds_object.Parcels = parcel_array
         self.suds_object.ClientReference = client_reference
+        collection_date = self.client.factory.create('CollectionDateType')
+        collection_date.CollectionDate = '2019-04-05'
         self.suds_object.CollectionDate = collection_date
         self.suds_object.SenderAddress = sender_address.get_soap_object()
         self.suds_object.RecipientAddress = recipient_address.get_soap_object()
         self.suds_object.FollowShipment = follow_shipment
-
 
     def get_soap_object(self):
         return self.suds_object

@@ -1,29 +1,26 @@
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
-from suds.plugin import MessagePlugin
-from suds import WebFault
-import suds
+from suds import WebFault, TypeNotFound
 from entities import parcel, address, recipient, sender, shipment
 
-class dbpapi(object):
 
-    def __init__(self):
+class DespatchBayAPI(object):
+
+    def __init__(self, apiuser, apikey):
         # todo: set differently
-        url = 'http://api.despatchbay.com/soap/%s/%s?wsdl'
+        url = 'http://api.despatchbay.st/soap/%s/%s?wsdl'
         account_url = url  % ('v14', 'account')
-        shipping_url = url  % ('v14', 'shipping')
-
-        # todo: don't hardcode auth
-        auth = ['user', 'pass']
-        t1 = HttpAuthenticated(username=auth[0], password=auth[1])
-        t2 = HttpAuthenticated(username=auth[0], password=auth[1])
-        t3 = HttpAuthenticated(username=auth[0], password=auth[1])
-        t4 = HttpAuthenticated(username=auth[0], password=auth[1])
+        shipping_url = url  % ('v15', 'shipping')
+        t1 = HttpAuthenticated(username=apiuser, password=apikey)
+        t2 = HttpAuthenticated(username=apiuser, password=apikey)
+        t3 = HttpAuthenticated(username=apiuser, password=apikey)
+        t4 = HttpAuthenticated(username=apiuser, password=apikey)
         self.accounts_client = Client(account_url,  transport=t1)
         self.addressing_client = Client(shipping_url,  transport=t2)
         self.shipping_client = Client(shipping_url,  transport=t3)
-        self.shipping_client.
         self.tracking_client = Client(shipping_url,  transport=t4)
+
+    # Shipping entities
 
     def parcel(self, **kwargs):
         """
@@ -55,6 +52,8 @@ class dbpapi(object):
         """
         return shipment.Shipment(self.shipping_client, **kwargs)
 
+    # Shipping services
+
     def get_available_services(self, shipment_request):
         try:
             return self.shipping_client.service.GetAvailableServices(shipment_request)
@@ -63,5 +62,27 @@ class dbpapi(object):
             print(e)
             print(self.shipping_client.last_sent())
 
+    def get_collection(self, collection_id):
+        return self.shipping_client.service.GetCollection(collection_id)
+
+    def get_collections(self):
+        return self.shipping_client.service.GetCollections()
+
+    def get_available_collection_dates(self, sender_address, courier_id):
+        try:
+            return self.shipping_client.service.GetAvailableCollectionDates(sender_address, courier_id)
+        except TypeNotFound as e:
+            print("last sent: ")
+            print(self.shipping_client.last_sent())
+
+    def get_shipment(self, shipment_id):
+        return self.shipping_client.service.GetShipment(shipment_id)
+
     def add_shipment(self, shipment_request):
         return self.shipping_client.service.AddShipment(shipment_request)
+
+    def book_shipments(self, shipment_ids):
+        return self.shipping_client.service.BookShipments(shipment_ids)
+
+    def cancel_shipment(self, shipment_id):
+        return self.shipping_client.service.CancelShipment(shipment_id)
