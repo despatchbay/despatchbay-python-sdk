@@ -1,18 +1,16 @@
-from entity import Entity
-
-
-class Recipient(Entity):
+class Recipient(object):
     def __init__(self, client, name=None, telephone=None, email=None, address=None):
-
-        Entity.__init__(self, client)
-
+        self.client = client
         self.type_name = 'ns1:RecipientAddressType'
-        self.suds_object = self.client.factory.create(self.type_name)
+        self.name = name
+        self.telephone = telephone
+        self.email = email
+        self.address = address
 
-        self.suds_object.RecipientName = name
-        self.suds_object.RecipientTelephone = telephone
-        self.suds_object.RecipientEmail = email
-        self.suds_object.RecipientAddress = address.get_soap_object()
-
-    def get_soap_object(self):
-        return self.suds_object
+    def to_soap_object(self):
+        suds_object = self.client.factory.create(self.type_name)
+        suds_object.RecipientName = self.name
+        suds_object.RecipientTelephone = self.telephone
+        suds_object.RecipientEmail = self.email
+        suds_object.RecipientAddress = self.address.to_soap_object()
+        return suds_object

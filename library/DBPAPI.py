@@ -52,15 +52,22 @@ class DespatchBayAPI(object):
         """
         return shipment.Shipment(self.shipping_client, **kwargs)
 
+    # Account Services
+
+    def get_account(self):
+        return self.accounts_client.service.GetAccount()
+
+    def get_account_balance(self):
+        return self.accounts_client.service.GetAccountBalance()
+
+    def get_sender_addresses(self):
+        return self.accounts_client.service.GetSenderAddresses()
+
     # Shipping services
 
     def get_available_services(self, shipment_request):
-        try:
-            return self.shipping_client.service.GetAvailableServices(shipment_request)
-        except WebFault as e:
-            print("error!")
-            print(e)
-            print(self.shipping_client.last_sent())
+        return self.shipping_client.service.GetAvailableServices(
+            shipment_request.to_soap_object())
 
     def get_collection(self, collection_id):
         return self.shipping_client.service.GetCollection(collection_id)
@@ -70,7 +77,8 @@ class DespatchBayAPI(object):
 
     def get_available_collection_dates(self, sender_address, courier_id):
         try:
-            return self.shipping_client.service.GetAvailableCollectionDates(sender_address, courier_id)
+            return self.shipping_client.service.GetAvailableCollectionDates(
+                sender_address.to_soap_object(), courier_id)
         except TypeNotFound as e:
             print("last sent: ")
             print(self.shipping_client.last_sent())
@@ -79,7 +87,7 @@ class DespatchBayAPI(object):
         return self.shipping_client.service.GetShipment(shipment_id)
 
     def add_shipment(self, shipment_request):
-        return self.shipping_client.service.AddShipment(shipment_request)
+        return self.shipping_client.service.AddShipment(shipment_request.to_soap_object())
 
     def book_shipments(self, shipment_ids):
         return self.shipping_client.service.BookShipments(shipment_ids)

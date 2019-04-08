@@ -1,35 +1,31 @@
-from entity import Entity
-
-
-class Shipment(Entity):
+class Shipment(object):
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None, sender_address=None, recipient_address=None, follow_shipment=None):
-
-        Entity.__init__(self, client)
-
+        self.client = client
         self.type_name = 'ns1:ShipmentRequestType'
-        self.suds_object = self.client.factory.create(self.type_name)
-        self.suds_object.ServiceID = service_id
+        self.service_id = service_id
+        self.parcels = parcels
+        self.client_reference = client_reference
+        self.collection_date = collection_date
+        self.sender_address = sender_address
+        self.recipient_address = recipient_address
+        self.follow_shipment = follow_shipment
 
-        parcel_array = client.factory.create('ns1:ArrayOfParcelType')
-        parcel_list = []
-        for item in parcels:
-            parcel_list.append(item.get_soap_object())
-        parcel_array.item = parcel_list
-        #todo: "SOMETHING" more appropriate
-        parcel_array._arrayType = "SOMETHING"
-        self.suds_object.Parcels = parcel_array
-        self.suds_object.ClientReference = client_reference
+    def to_soap_object(self):
+        suds_object = self.client.factory.create(self.type_name)
+        parcel_array = self.client.factory.create('ns1:ArrayOfParcelType')
+        soap_parcel_list = []
+        for item in self.parcels:
+            soap_parcel_list.append(item.to_soap_object())
+        print(soap_parcel_list)
+        parcel_array.item = soap_parcel_list
+        parcel_array._arrayType = "urn:ParcelType[]"
         collection_date = self.client.factory.create('CollectionDateType')
-        collection_date.CollectionDate = '2019-04-05'
-        self.suds_object.CollectionDate = collection_date
-        self.suds_object.SenderAddress = sender_address.get_soap_object()
-        self.suds_object.RecipientAddress = recipient_address.get_soap_object()
-        self.suds_object.FollowShipment = follow_shipment
-
-    def get_soap_object(self):
-        return self.suds_object
-
-
-
-
-
+        collection_date.CollectionDate = self.collection_date
+        suds_object.ServiceID = self.service_id
+        suds_object.Parcels = parcel_array
+        suds_object.ClientReference = self.client_reference
+        suds_object.CollectionDate = collection_date
+        suds_object.SenderAddress = self.sender_address.to_soap_object()
+        suds_object.RecipientAddress = self.recipient_address.to_soap_object()
+        suds_object.FollowShipment = self.follow_shipment
+        return suds_object

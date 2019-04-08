@@ -1,21 +1,22 @@
-from entity import Entity
-
-
-class Address(Entity):
+class Address(object):
     def __init__(self, client, company_name, street, locality, town_city, county, postal_code, country_code):
-
-        Entity.__init__(self, client)
-
+        self.client = client
         self.type_name = 'ns1:AddressType'
-        self.suds_object = self.client.factory.create(self.type_name)
+        self.company_name = company_name
+        self.street = street
+        self.locality = locality
+        self.town_city = town_city
+        self.county = county
+        self.postal_code = postal_code
+        self.country_code = country_code
 
-        self.suds_object.CompanyName = company_name
-        self.suds_object.Street = street
-        self.suds_object.Locality = locality
-        self.suds_object.TownCity = town_city
-        self.suds_object.County = county
-        self.suds_object.PostalCode = postal_code
-        self.suds_object.CountryCode = country_code
-
-    def get_soap_object(self):
-        return self.suds_object
+    def to_soap_object(self):
+        suds_object = self.client.factory.create(self.type_name)
+        suds_object.CompanyName = self.company_name
+        suds_object.Street = self.street
+        suds_object.Locality = self.locality
+        suds_object.TownCity = self.town_city
+        suds_object.County = self.county
+        suds_object.PostalCode = self.postal_code
+        suds_object.CountryCode = self.country_code
+        return suds_object

@@ -1,22 +1,20 @@
-from entity import Entity
-
-
-class Sender(Entity):
-    # todo: handle the exclusivity of senderaddress or senderaddressid
+class Sender(object):
     def __init__(self, client, name=None, telephone=None, email=None, address=None, address_id=None):
-
-        Entity.__init__(self, client)
-
+        self.client = client
         self.type_name = 'ns1:SenderAddressType'
-        self.suds_object = self.client.factory.create(self.type_name)
+        self.name = name
+        self.telephone = telephone
+        self.email = email
+        self.address_id = address_id
+        self.address = address
 
-        self.suds_object.SenderName = name
-        self.suds_object.SenderTelephone = telephone
-        self.suds_object.SenderEmail = email
-        if address_id:
-            self.suds_object.SenderAddressID = address_id
+    def to_soap_object(self):
+        suds_object = self.client.factory.create(self.type_name)
+        suds_object.SenderName = self.name
+        suds_object.SenderTelephone = self.telephone
+        suds_object.SenderEmail = self.email
+        if self.address_id:
+            suds_object.SenderAddressID = self.address_id
         else:
-            self.suds_object.SenderAddress = address.get_soap_object()
-
-    def get_soap_object(self):
-        return self.suds_object
+            suds_object.SenderAddress = self.address.to_soap_object()
+        return suds_object
