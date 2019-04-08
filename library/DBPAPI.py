@@ -9,16 +9,19 @@ class DespatchBayAPI(object):
     def __init__(self, apiuser, apikey):
         # todo: set differently
         url = 'http://api.despatchbay.st/soap/%s/%s?wsdl'
-        account_url = url  % ('v14', 'account')
+        account_url = url  % ('v15', 'account')
         shipping_url = url  % ('v15', 'shipping')
+        addressing_url = url  % ('v15', 'addressing')
         t1 = HttpAuthenticated(username=apiuser, password=apikey)
         t2 = HttpAuthenticated(username=apiuser, password=apikey)
         t3 = HttpAuthenticated(username=apiuser, password=apikey)
         t4 = HttpAuthenticated(username=apiuser, password=apikey)
         self.accounts_client = Client(account_url,  transport=t1)
-        self.addressing_client = Client(shipping_url,  transport=t2)
+        self.addressing_client = Client(addressing_url,  transport=t2)
         self.shipping_client = Client(shipping_url,  transport=t3)
         self.tracking_client = Client(shipping_url,  transport=t4)
+
+        print(addressing_url)
 
     # Shipping entities
 
@@ -62,6 +65,17 @@ class DespatchBayAPI(object):
 
     def get_sender_addresses(self):
         return self.accounts_client.service.GetSenderAddresses()
+
+    # Addressing Services
+
+    def find_address(self, postcode, property):
+        return self.addressing_client.service.FindAddress(postcode, property)
+
+    def get_address_by_key(self, key):
+        return self.addressing_client.service.GetAddressByKey(key)
+
+    def get_address_keys_by_postcode(self, postcode):
+        return self.addressing_client.service.GetAddressKeysByPostcode(postcode)
 
     # Shipping services
 
