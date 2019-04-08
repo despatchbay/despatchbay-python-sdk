@@ -12,6 +12,7 @@ class DespatchBayAPI(object):
         account_url = url  % ('v15', 'account')
         shipping_url = url  % ('v15', 'shipping')
         addressing_url = url  % ('v15', 'addressing')
+        tracking_url = url  % ('v15', 'tracking')
         t1 = HttpAuthenticated(username=apiuser, password=apikey)
         t2 = HttpAuthenticated(username=apiuser, password=apikey)
         t3 = HttpAuthenticated(username=apiuser, password=apikey)
@@ -19,8 +20,7 @@ class DespatchBayAPI(object):
         self.accounts_client = Client(account_url,  transport=t1)
         self.addressing_client = Client(addressing_url,  transport=t2)
         self.shipping_client = Client(shipping_url,  transport=t3)
-        self.tracking_client = Client(shipping_url,  transport=t4)
-
+        self.tracking_client = Client(tracking_url,  transport=t4)
         print(addressing_url)
 
     # Shipping entities
@@ -108,3 +108,8 @@ class DespatchBayAPI(object):
 
     def cancel_shipment(self, shipment_id):
         return self.shipping_client.service.CancelShipment(shipment_id)
+
+    # Tracking services
+
+    def get_tracking(self, tracking_number):
+        return self.tracking_client.service.GetTracking(tracking_number)
