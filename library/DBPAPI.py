@@ -1,6 +1,11 @@
+from urllib.parse import urlencode
+import base64
+
+import requests
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 from suds import WebFault, TypeNotFound
+
 from entities import parcel, address, recipient, sender, shipment
 
 
@@ -8,11 +13,13 @@ class DespatchBayAPI(object):
 
     def __init__(self, apiuser, apikey):
         # todo: set differently
-        url = 'http://api.despatchbay.st/soap/%s/%s?wsdl'
-        account_url = url  % ('v15', 'account')
-        shipping_url = url  % ('v15', 'shipping')
-        addressing_url = url  % ('v15', 'addressing')
-        tracking_url = url  % ('v15', 'tracking')
+        url = 'http://api.despatchbay.st'
+        soap_path = '/soap/%s/%s?wsdl'
+        documents_path = '/documents/v1/'
+        account_url = url + soap_path % ('v15', 'account')
+        shipping_url = url + soap_path % ('v15', 'shipping')
+        addressing_url = url + soap_path % ('v15', 'addressing')
+        tracking_url = url + soap_path % ('v15', 'tracking')
         t1 = HttpAuthenticated(username=apiuser, password=apikey)
         t2 = HttpAuthenticated(username=apiuser, password=apikey)
         t3 = HttpAuthenticated(username=apiuser, password=apikey)
@@ -21,6 +28,8 @@ class DespatchBayAPI(object):
         self.addressing_client = Client(addressing_url,  transport=t2)
         self.shipping_client = Client(shipping_url,  transport=t3)
         self.tracking_client = Client(tracking_url,  transport=t4)
+        self.labels_url = url + documents_path + 'labels'
+        self.manifest_url = url + documents_path + 'manifest'
         print(addressing_url)
 
     # Shipping entities
@@ -113,3 +122,49 @@ class DespatchBayAPI(object):
 
     def get_tracking(self, tracking_number):
         return self.tracking_client.service.GetTracking(tracking_number)
+
+    # Labels services
+
+    def get_shipment_labels(self, ship_collect_ids, download_path, layout=None,
+                                  label_format=None, label_dpi=None):
+        if isinstance(ship_collect_ids, list):
+            shipment_string = ','.join(ship_collect_ids)
+        else:
+            shipment_string = ship_collect_ids
+        query_dict = {}
+        if layout:
+            query_dict['layout'] = layout
+        if label_format:
+            query_dict['format'] = label_format
+            if label_format == 'png_base64' and label_dpi:
+                query_dict['dpi'] = label_dpi
+        label_request_url = '{}/{}'.format(self.labels_url,
+                                           shipment_string)
+        if query_dict:
+            query_string = urlencode(query_dict)
+            label_request_url = label_request_url + '?' + query_string
+        r = requests.get(label_request_url)
+        if label_format == 'png_base64' or label_format == 'pdf_base64':
+            label_data = base64.b64decode(r.content)
+        else:
+            label_data = r.content
+        with open(download_path, 'wb') as label_file:
+            label_file.write(label_data)
+
+    def get_manifest(self, collection_id, download_path, manifest_format=None):
+        query_dict = {}
+        if manifest_format:
+            query_dict['format'] = manifest_format
+        manifest_request_url = '{}/{}'.format(self.manifest_url,
+                                              collection_id)
+        if query_dict:
+            query_string = urlencode(query_dict)
+            manifest_request_url = manifest_request_url + '?' + query_string
+        r = requests.get(manifest_request_url)
+        if manifest_format == 'base64':
+            manifest_data = base64.b64decode(r.content)
+        else:
+            manifest_data = r.content
+        with open(download_path, 'wb') as manifest_file:
+            manifest_file.write(manifest_data)
+
