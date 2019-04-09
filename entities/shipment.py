@@ -1,3 +1,6 @@
+import suds.sudsobject
+
+
 class Shipment(object):
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None, sender_address=None, recipient_address=None, follow_shipment=None):
         self.client = client
@@ -19,8 +22,11 @@ class Shipment(object):
         print(soap_parcel_list)
         parcel_array.item = soap_parcel_list
         parcel_array._arrayType = "urn:ParcelType[]"
-        collection_date = self.client.factory.create('CollectionDateType')
-        collection_date.CollectionDate = self.collection_date
+        if isinstance(self.collection_date, str):
+            collection_date = self.client.factory.create('CollectionDateType')
+            collection_date.CollectionDate = self.collection_date
+        else:
+            collection_date = self.collection_date
         suds_object.ServiceID = self.service_id
         suds_object.Parcels = parcel_array
         suds_object.ClientReference = self.client_reference
