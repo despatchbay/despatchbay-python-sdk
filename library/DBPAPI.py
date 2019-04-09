@@ -4,7 +4,6 @@ import base64
 import requests
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
-from suds import WebFault, TypeNotFound
 
 from entities import parcel, address, recipient, sender, shipment
 
@@ -99,12 +98,8 @@ class DespatchBayAPI(object):
         return self.shipping_client.service.GetCollections()
 
     def get_available_collection_dates(self, sender_address, courier_id):
-        try:
-            return self.shipping_client.service.GetAvailableCollectionDates(
-                sender_address.to_soap_object(), courier_id)
-        except TypeNotFound as e:
-            print("last sent: ")
-            print(self.shipping_client.last_sent())
+        return self.shipping_client.service.GetAvailableCollectionDates(
+            sender_address.to_soap_object(), courier_id)
 
     def get_shipment(self, shipment_id):
         return self.shipping_client.service.GetShipment(shipment_id)
@@ -125,8 +120,8 @@ class DespatchBayAPI(object):
 
     # Labels services
 
-    def get_shipment_labels(self, ship_collect_ids, download_path, layout=None,
-                                  label_format=None, label_dpi=None):
+    def download_shipment_labels(self, ship_collect_ids, download_path, layout=None,
+                                 label_format=None, label_dpi=None):
         if isinstance(ship_collect_ids, list):
             shipment_string = ','.join(ship_collect_ids)
         else:
@@ -151,7 +146,7 @@ class DespatchBayAPI(object):
         with open(download_path, 'wb') as label_file:
             label_file.write(label_data)
 
-    def get_manifest(self, collection_id, download_path, manifest_format=None):
+    def download_manifest(self, collection_id, download_path, manifest_format=None):
         query_dict = {}
         if manifest_format:
             query_dict['format'] = manifest_format
