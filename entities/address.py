@@ -10,6 +10,19 @@ class Address(object):
         self.postal_code = postal_code
         self.country_code = country_code
 
+    @classmethod
+    def from_dict(cls, client, **kwargs):
+        return cls(
+            client=client,
+            company_name=kwargs.get('CompanyName', None),
+            street=kwargs.get('Street', None),
+            locality=kwargs.get('Locality', None),
+            town_city=kwargs.get('TownCity', None),
+            county=kwargs.get('County', None),
+            postal_code=kwargs.get('PostalCode', None),
+            country_code=kwargs.get('CountryCode', None)
+        )
+
     def to_soap_object(self):
         suds_object = self.client.factory.create(self.type_name)
         suds_object.CompanyName = self.company_name

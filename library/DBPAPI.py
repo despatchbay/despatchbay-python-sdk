@@ -5,7 +5,7 @@ import requests
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
-from entities import parcel, address, recipient, sender, shipment
+from entities import parcel, address, recipient, sender, shipment, account, account_balance, address_key
 
 
 class DespatchBayAPI(object):
@@ -66,24 +66,58 @@ class DespatchBayAPI(object):
     # Account Services
 
     def get_account(self):
-        return self.accounts_client.service.GetAccount()
+        account_data = self.accounts_client.service.GetAccount()
+        account_dict = self.accounts_client.dict(account_data)
+        account_object = account.Account.from_dict(self.accounts_client, **account_dict)
+        return account_object
 
     def get_account_balance(self):
-        return self.accounts_client.service.GetAccountBalance()
+        balance_data = self.accounts_client.service.GetAccountBalance()
+        balance_dict = self.accounts_client.dict(balance_data)
+        balance_object = account_balance.AccountBalance.from_dict(
+            self.accounts_client,
+            **balance_dict)
+        return balance_object
 
     def get_sender_addresses(self):
-        return self.accounts_client.service.GetSenderAddresses()
+        sender_addresses_data = self.accounts_client.service.GetSenderAddresses()
+        sender_addresses_dict_list = []
+        for sender_address in sender_addresses_data:
+            sender_address_dict = self.accounts_client.dict(sender_address)
+            sender_addresses_dict_list.append(sender.Sender.from_dict(
+                self.accounts_client,
+                **sender_address_dict))
+        return sender_addresses_dict_list
 
     # Addressing Services
 
     def find_address(self, postcode, property):
-        return self.addressing_client.service.FindAddress(postcode, property)
+        found_address = self.addressing_client.service.FindAddress(postcode, property)
+        found_address_dict = self.addressing_client.dict(found_address)
+        found_address_object = address.Address.from_dict(
+            self.addressing_client,
+            **found_address_dict
+        )
+        return found_address_object
 
     def get_address_by_key(self, key):
-        return self.addressing_client.service.GetAddressByKey(key)
+        found_address = self.addressing_client.service.GetAddressByKey(key)
+        found_address_dict = self.addressing_client.dict(found_address)
+        found_address_object = address.Address.from_dict(
+            self.addressing_client,
+            **found_address_dict
+        )
+        return found_address_object
 
     def get_address_keys_by_postcode(self, postcode):
-        return self.addressing_client.service.GetAddressKeysByPostcode(postcode)
+        address_key_return = self.addressing_client.service.GetAddressKeysByPostcode(postcode)
+        address_keys_dict_list = []
+        for soap_address_key in address_key_return:
+            address_key_dict = self.accounts_client.dict(soap_address_key)
+            address_keys_dict_list.append(address_key.AddressKey.from_dict(
+                self.addressing_client,
+                **address_key_dict))
+        return address_keys_dict_list
 
     # Shipping services
 
