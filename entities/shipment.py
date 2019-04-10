@@ -1,4 +1,4 @@
-import suds.sudsobject
+import recipient, sender, parcel
 
 
 class Shipment(object):

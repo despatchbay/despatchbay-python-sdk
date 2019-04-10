@@ -10,6 +10,19 @@ class Parcel(object):
         self.value = value
         self.tracking_number = tracking_number
 
+    @classmethod
+    def from_dict(cls, client, **kwargs):
+        return cls(
+            client=client,
+            weight=kwargs.get('Weight', None),
+            length=kwargs.get('Length', None),
+            width=kwargs.get('Width', None),
+            height=kwargs.get('Height', None),
+            contents=kwargs.get('Contents', None),
+            value=kwargs.get('Value', None),
+            tracking_number=kwargs.get('TrackingNumber', None)
+        )
+
     def to_soap_object(self):
         suds_object = self.client.factory.create(self.type_name)
         suds_object.Weight = self.weight

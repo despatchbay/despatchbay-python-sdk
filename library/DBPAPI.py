@@ -5,7 +5,7 @@ import requests
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
-from entities import parcel, address, recipient, sender, shipment, account, account_balance, address_key
+from entities import parcel, address, recipient, sender, shipment, account, account_balance, address_key, service
 
 
 class DespatchBayAPI(object):
@@ -91,8 +91,8 @@ class DespatchBayAPI(object):
 
     # Addressing Services
 
-    def find_address(self, postcode, property):
-        found_address = self.addressing_client.service.FindAddress(postcode, property)
+    def find_address(self, postcode, property_string):
+        found_address = self.addressing_client.service.FindAddress(postcode, property_string)
         found_address_dict = self.addressing_client.dict(found_address)
         found_address_object = address.Address.from_dict(
             self.addressing_client,
@@ -122,18 +122,24 @@ class DespatchBayAPI(object):
     # Shipping services
 
     def get_available_services(self, shipment_request):
-        return self.shipping_client.service.GetAvailableServices(
+        available_services_response = self.shipping_client.service.GetAvailableServices(
             shipment_request.to_soap_object())
+        available_service_dict_list = []
+        for available_service in available_services_response:
+            available_service_dict = self.accounts_client.dict(available_service)
+            available_service_dict_list.append(service.Service.from_dict(
+                self.shipping_client,
+                **available_service_dict))
+        return available_service_dict_list
 
     def get_collection(self, collection_id):
         return self.shipping_client.service.GetCollection(collection_id)
 
-    def get_collections(self):
-        return self.shipping_client.service.GetCollections()
-
     def get_available_collection_dates(self, sender_address, courier_id):
         return self.shipping_client.service.GetAvailableCollectionDates(
             sender_address.to_soap_object(), courier_id)
+    def get_collections(self):
+        return self.shipping_client.service.GetCollections()
 
     def get_shipment(self, shipment_id):
         return self.shipping_client.service.GetShipment(shipment_id)
@@ -196,4 +202,3 @@ class DespatchBayAPI(object):
             manifest_data = r.content
         with open(download_path, 'wb') as manifest_file:
             manifest_file.write(manifest_data)
-

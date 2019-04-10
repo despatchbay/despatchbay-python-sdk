@@ -1,5 +1,6 @@
 import address
 
+
 class Sender(object):
     def __init__(self, client, name=None, telephone=None, email=None, address=None, address_id=None):
         self.client = client
