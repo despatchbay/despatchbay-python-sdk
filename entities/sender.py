@@ -21,7 +21,7 @@ class Sender(object):
             address_id=kwargs.get('SenderAddressID'),
             address=address.Address.from_dict(
                 client,
-                **client.accounts_client.dict(kwargs.get('SenderAddress', None))
+                **client.dict(kwargs.get('SenderAddress', None))
             )
         )
 

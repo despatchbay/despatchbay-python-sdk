@@ -12,6 +12,7 @@ class Parcel(object):
 
     @classmethod
     def from_dict(cls, client, **kwargs):
+        print('parcel from dict kwargs', kwargs)
         return cls(
             client=client,
             weight=kwargs.get('Weight', None),

@@ -5,7 +5,7 @@ import requests
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 
-from entities import parcel, address, recipient, sender, shipment, account, account_balance, address_key, service
+from entities import parcel, address, recipient, sender, shipment_request, account, account_balance, address_key, service, collection, shipment_return
 
 
 class DespatchBayAPI(object):
@@ -61,7 +61,7 @@ class DespatchBayAPI(object):
         """
         Creates a dbp shipment entity
         """
-        return shipment.Shipment(self.shipping_client, **kwargs)
+        return shipment_request.Shipment(self.shipping_client, **kwargs)
 
     # Account Services
 
@@ -126,29 +126,69 @@ class DespatchBayAPI(object):
             shipment_request.to_soap_object())
         available_service_dict_list = []
         for available_service in available_services_response:
-            available_service_dict = self.accounts_client.dict(available_service)
+            available_service_dict = self.shipping_client.dict(available_service)
             available_service_dict_list.append(service.Service.from_dict(
                 self.shipping_client,
                 **available_service_dict))
         return available_service_dict_list
 
-    def get_collection(self, collection_id):
-        return self.shipping_client.service.GetCollection(collection_id)
-
     def get_available_collection_dates(self, sender_address, courier_id):
-        return self.shipping_client.service.GetAvailableCollectionDates(
+        available_collection_dates_response = self.shipping_client.service.GetAvailableCollectionDates(
             sender_address.to_soap_object(), courier_id)
+        available_collection_dates_list = []
+        for collection_date in available_collection_dates_response:
+            collection_date_dict = self.shipping_client.dict(collection_date)
+            available_collection_dates_list.append(collection_date_dict['CollectionDate'])
+        return available_collection_dates_list
+
+    def get_collection(self, collection_id):
+        collection = self.shipping_client.service.GetCollection(collection_id)
+        collection_dict = self.shipping_client.dict(collection)
+        collection_object = address.Address.from_dict(
+            self.shipping_client,
+            **collection_dict
+        )
+        return collection_object
+
     def get_collections(self):
-        return self.shipping_client.service.GetCollections()
+        collections = self.shipping_client.service.GetCollections()
+        collections_dict_list = []
+        for found_collection in collections:
+            collection_dict = self.shipping_client.dict(found_collection)
+            collections_dict_list.append(
+                collection.Collection.from_dict(
+                    self.shipping_client,
+                    **collection_dict
+                )
+            )
+        return collections_dict_list
 
     def get_shipment(self, shipment_id):
-        return self.shipping_client.service.GetShipment(shipment_id)
+        shipment_item = self.shipping_client.service.GetShipment(shipment_id)
+        shipment_dict = self.shipping_client.dict(shipment_item)
+        collection_object = shipment_return.Shipment.from_dict(
+            self.shipping_client,
+            **shipment_dict
+        )
+        return collection_object
 
     def add_shipment(self, shipment_request):
         return self.shipping_client.service.AddShipment(shipment_request.to_soap_object())
 
     def book_shipments(self, shipment_ids):
-        return self.shipping_client.service.BookShipments(shipment_ids)
+        array_of_shipment_id = self.shipping_client.factory.create('ns1:ArrayOfShipmentID')
+        array_of_shipment_id.item = shipment_ids
+        booked_shipments = self.shipping_client.service.BookShipments(array_of_shipment_id)
+        booked_shipments_list = []
+        for booked_shipment in booked_shipments:
+            booked_shipment_dict = self.shipping_client.dict(booked_shipment)
+            booked_shipments_list.append(
+                shipment_return.Shipment.from_dict(
+                    self.shipping_client,
+                    **booked_shipment_dict
+                )
+            )
+        return booked_shipments_list
 
     def cancel_shipment(self, shipment_id):
         return self.shipping_client.service.CancelShipment(shipment_id)

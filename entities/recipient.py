@@ -19,7 +19,7 @@ class Recipient(object):
             email=kwargs.get('RecipientEmail', None),
             address=address.Address.from_dict(
                 client,
-                **client.accounts_client.dict(kwargs.get('RecipientAddress', None))
+                **client.dict(kwargs.get('RecipientAddress', None))
             )
         )
 
