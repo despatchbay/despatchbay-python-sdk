@@ -11,7 +11,6 @@ from entities import parcel, address, recipient, sender, shipment_request, accou
 class DespatchBayAPI(object):
 
     def __init__(self, apiuser, apikey):
-        # todo: set differently
         url = 'http://api.despatchbay.st'
         soap_path = '/soap/%s/%s?wsdl'
         documents_path = '/documents/v1/'
@@ -19,17 +18,21 @@ class DespatchBayAPI(object):
         shipping_url = url + soap_path % ('v15', 'shipping')
         addressing_url = url + soap_path % ('v15', 'addressing')
         tracking_url = url + soap_path % ('v15', 'tracking')
-        t1 = HttpAuthenticated(username=apiuser, password=apikey)
-        t2 = HttpAuthenticated(username=apiuser, password=apikey)
-        t3 = HttpAuthenticated(username=apiuser, password=apikey)
-        t4 = HttpAuthenticated(username=apiuser, password=apikey)
-        self.accounts_client = Client(account_url,  transport=t1)
-        self.addressing_client = Client(addressing_url,  transport=t2)
-        self.shipping_client = Client(shipping_url,  transport=t3)
-        self.tracking_client = Client(tracking_url,  transport=t4)
+        self.accounts_client = Client(
+            account_url, transport=self.create_transport(apiuser, apikey))
+        self.addressing_client = Client(
+            addressing_url, transport=self.create_transport(apiuser, apikey))
+        self.shipping_client = Client(
+            shipping_url, transport=self.create_transport(apiuser, apikey))
+        self.tracking_client = Client(
+            tracking_url, transport=self.create_transport(apiuser, apikey))
         self.labels_url = url + documents_path + 'labels'
         self.manifest_url = url + documents_path + 'manifest'
         print(addressing_url)
+
+    @staticmethod
+    def create_transport(username, password):
+        return HttpAuthenticated(username=username, password=password)
 
     # Shipping entities
 
@@ -200,8 +203,8 @@ class DespatchBayAPI(object):
 
     # Labels services
 
-    def download_shipment_labels(self, ship_collect_ids, download_path, layout=None,
-                                 label_format=None, label_dpi=None):
+    def get_shipment_labels(self, ship_collect_ids, layout=None, label_format=None,
+                                 label_dpi=None):
         if isinstance(ship_collect_ids, list):
             shipment_string = ','.join(ship_collect_ids)
         else:
@@ -223,10 +226,9 @@ class DespatchBayAPI(object):
             label_data = base64.b64decode(r.content)
         else:
             label_data = r.content
-        with open(download_path, 'wb') as label_file:
-            label_file.write(label_data)
+        return label_data
 
-    def download_manifest(self, collection_id, download_path, manifest_format=None):
+    def get_manifest(self, collection_id, manifest_format=None):
         query_dict = {}
         if manifest_format:
             query_dict['format'] = manifest_format
@@ -240,5 +242,4 @@ class DespatchBayAPI(object):
             manifest_data = base64.b64decode(r.content)
         else:
             manifest_data = r.content
-        with open(download_path, 'wb') as manifest_file:
-            manifest_file.write(manifest_data)
+        return manifest_data
