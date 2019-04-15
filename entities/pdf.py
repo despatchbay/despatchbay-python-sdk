@@ -5,6 +5,7 @@ class Pdf(object):
     def __init__(self, data):
         # if self.is_pdf(data):
         self.data = data
+        print(self.data)
         # else:
         #     pass
         #     # print(data)

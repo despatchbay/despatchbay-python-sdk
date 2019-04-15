@@ -19,7 +19,6 @@ class Shipment(object):
         soap_parcel_list = []
         for item in self.parcels:
             soap_parcel_list.append(item.to_soap_object())
-        print(soap_parcel_list)
         parcel_array.item = soap_parcel_list
         parcel_array._arrayType = "urn:ParcelType[]"
         if isinstance(self.collection_date, str):
