@@ -23,7 +23,7 @@ class Account(object):
             name=kwargs.get('AccountName', None),
             balance=account_balance.AccountBalance.from_dict(
                 client,
-                **client.accounts_client.dict(kwargs.get('AccountBalance', None))
+                **client.dict(kwargs.get('AccountBalance', None))
             )
         )
 

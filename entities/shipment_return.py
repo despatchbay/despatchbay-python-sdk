@@ -1,7 +1,7 @@
 import recipient, sender, parcel
 
 
-class Shipment(object):
+class ShipmentReturn(object):
     def __init__(self, client, shipment_id=None, shipment_document_id=None, collection_id=None,
                  service_id=None, parcels=None, client_reference=None, recipient_address=None,
                  is_followed=None, is_printed=None, is_despatched=None, is_delivered=None,

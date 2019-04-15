@@ -6,19 +6,19 @@ from entities.parcel import Parcel
 from entities.address import Address
 from entities.recipient import Recipient
 from entities.sender import Sender
-from entities.shipment_request import Shipment
+from entities.shipment_request import ShipmentRequest
 from entities.account import Account
 from entities.account_balance import AccountBalance
 from entities.address_key import AddressKey
 from entities.service import Service
 from entities.collection import Collection
-from entities.shipment_return import Shipment
+from entities.shipment_return import ShipmentReturn
 from library.pdf_client import PdfClient
 
 
 class DespatchBayAPI(object):
 
-    def __init__(self, apiuser, apikey):
+    def __init__(self, api_user, api_key,):
         url = 'http://api.despatchbay.st'
         soap_path = '/soap/%s/%s?wsdl'
         documents_path = '/documents/v1/'
@@ -27,17 +27,16 @@ class DespatchBayAPI(object):
         addressing_url = url + soap_path % ('v15', 'addressing')
         tracking_url = url + soap_path % ('v15', 'tracking')
         self.accounts_client = Client(
-            account_url, transport=self.create_transport(apiuser, apikey))
+            account_url, transport=self.create_transport(api_user, api_key))
         self.addressing_client = Client(
-            addressing_url, transport=self.create_transport(apiuser, apikey))
+            addressing_url, transport=self.create_transport(api_user, api_key))
         self.shipping_client = Client(
-            shipping_url, transport=self.create_transport(apiuser, apikey))
+            shipping_url, transport=self.create_transport(api_user, api_key))
         self.tracking_client = Client(
-            tracking_url, transport=self.create_transport(apiuser, apikey))
+            tracking_url, transport=self.create_transport(api_user, api_key))
         self.labels_url = url + documents_path + 'labels'
         self.manifest_url = url + documents_path + 'manifest'
-        # todo set user agent
-        self.pdf_client = PdfClient({'apiUser': apiuser, 'apikey': apikey}, 'some_user_agent')
+        self.pdf_client = PdfClient({'api_user': api_user, 'api_key': api_key})
         print(addressing_url)
 
     @staticmethod
@@ -70,15 +69,16 @@ class DespatchBayAPI(object):
         """
         return Sender(self.shipping_client, **kwargs)
 
-    def shipment(self, **kwargs):
+    def shipment_request(self, **kwargs):
         """
         Creates a dbp shipment entity
         """
-        return Shipment(self.shipping_client, **kwargs)
+        return ShipmentRequest(self.shipping_client, **kwargs)
 
     # Account Services
 
     def get_account(self):
+        """Calls GetAccount from the Despatch Bay Account Service."""
         account_dict = self.accounts_client.dict(self.accounts_client.service.GetAccount())
         return Account.from_dict(
             self.accounts_client,
@@ -86,6 +86,9 @@ class DespatchBayAPI(object):
         )
 
     def get_account_balance(self):
+        """
+        Calls GetBalance from the Despatch Bay Account Service.
+        """
         balance_dict = self.accounts_client.dict(self.accounts_client.service.GetAccountBalance())
         return AccountBalance.from_dict(
             self.accounts_client,
@@ -93,6 +96,9 @@ class DespatchBayAPI(object):
         )
 
     def get_sender_addresses(self):
+        """
+        Calls GetSenderAddresses from the Despatch Bay Account Service.
+        """
         sender_addresses_dict_list = []
         for sender_address in self.accounts_client.service.GetSenderAddresses():
             sender_address_dict = self.accounts_client.dict(sender_address)
@@ -100,6 +106,19 @@ class DespatchBayAPI(object):
                 self.accounts_client,
                 **sender_address_dict))
         return sender_addresses_dict_list
+
+    def get_services(self):
+        """
+        Calls GetServices from the Despatch Bay Account Service.
+        """
+        service_list = []
+        for account_service in  self.accounts_client.service.GetServices():
+            service_list.append(
+                Service.from_dict(
+                    self.accounts_client,
+                    **self.accounts_client.dict(account_service)
+                ))
+        return service_list
 
     # Addressing Services
 
@@ -175,7 +194,7 @@ class DespatchBayAPI(object):
     def get_shipment(self, shipment_id):
         shipment_dict = self.shipping_client.dict(
             self.shipping_client.service.GetShipment(shipment_id))
-        return Shipment.from_dict(
+        return ShipmentReturn.from_dict(
             self.shipping_client,
             **shipment_dict
         )
@@ -190,7 +209,7 @@ class DespatchBayAPI(object):
         for booked_shipment in self.shipping_client.service.BookShipments(array_of_shipment_id):
             booked_shipment_dict = self.shipping_client.dict(booked_shipment)
             booked_shipments_list.append(
-                Shipment.from_dict(
+                ShipmentReturn.from_dict(
                     self.shipping_client,
                     **booked_shipment_dict
                 )
@@ -208,7 +227,7 @@ class DespatchBayAPI(object):
     # Labels services
 
     def fetch_shipment_labels(self, document_id, **kwargs):
-        self.pdf_client.fetch_shipment_labels(document_id, **kwargs)
+        return self.pdf_client.fetch_shipment_labels(document_id, **kwargs)
 
     def fetch_manifest(self, collection_id):
-        self.pdf_client.fetch_manifest(collection_id)
+        return self.pdf_client.fetch_manifest(collection_id)

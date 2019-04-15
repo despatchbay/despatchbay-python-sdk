@@ -1,7 +1,7 @@
 import recipient, sender, parcel
 
 
-class Shipment(object):
+class ShipmentRequest(object):
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None, sender_address=None, recipient_address=None, follow_shipment=None):
         self.client = client
         self.type_name = 'ns1:ShipmentRequestType'

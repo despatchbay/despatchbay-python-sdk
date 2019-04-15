@@ -9,12 +9,11 @@ import exception
 class PdfClient(object):
     API_URI = 'http://api.despatchbay.st/documents/v1/labels'
 
-    def __init__(self, credentials, user_agent):
+    def __init__(self, credentials):
         self.auth = {
-            'apiuser': credentials['apiUser'],
-            'apikey': credentials['apiKey']
+            'api_user': credentials['api_user'],
+            'api_key': credentials['api_key']
         }
-        self.user_agent = user_agent
 
     def handle_response_code(self, code):
         if code == 200:
