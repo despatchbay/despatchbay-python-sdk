@@ -18,14 +18,12 @@ from library.pdf_client import PdfClient
 
 class DespatchBayAPI(object):
 
-    def __init__(self, api_user, api_key,):
-        url = 'http://api.despatchbay.st'
-        soap_path = '/soap/%s/%s?wsdl'
+    def __init__(self, api_user, api_key, soap_api_url='api.despatchbay.com/soap/v15/%s?wsdl', documents_url=''):
         documents_path = '/documents/v1/'
-        account_url = url + soap_path % ('v15', 'account')
-        shipping_url = url + soap_path % ('v15', 'shipping')
-        addressing_url = url + soap_path % ('v15', 'addressing')
-        tracking_url = url + soap_path % ('v15', 'tracking')
+        account_url = soap_api_url % 'account'
+        shipping_url = soap_api_url % 'shipping'
+        addressing_url = soap_api_url % 'addressing'
+        tracking_url = soap_api_url % 'tracking'
         self.accounts_client = Client(
             account_url, transport=self.create_transport(api_user, api_key))
         self.addressing_client = Client(
@@ -34,8 +32,6 @@ class DespatchBayAPI(object):
             shipping_url, transport=self.create_transport(api_user, api_key))
         self.tracking_client = Client(
             tracking_url, transport=self.create_transport(api_user, api_key))
-        self.labels_url = url + documents_path + 'labels'
-        self.manifest_url = url + documents_path + 'manifest'
         self.pdf_client = PdfClient({'api_user': api_user, 'api_key': api_key})
         print(addressing_url)
 
@@ -123,6 +119,9 @@ class DespatchBayAPI(object):
     # Addressing Services
 
     def find_address(self, postcode, property_string):
+        """
+        Calls FindAddress from the Despatch Bay Addressing Service.
+        """
         found_address_dict = self.addressing_client.dict(
             self.addressing_client.service.FindAddress(
                 postcode, property_string
@@ -133,6 +132,9 @@ class DespatchBayAPI(object):
         )
 
     def get_address_by_key(self, key):
+        """
+        Calls GetAddressByKey from the Despatch Bay Addressing Service.
+        """
         found_address_dict = self.addressing_client.dict(
             self.addressing_client.service.GetAddressByKey(key)
         )
@@ -142,6 +144,9 @@ class DespatchBayAPI(object):
         )
 
     def get_address_keys_by_postcode(self, postcode):
+        """
+        Calls GetAddressKeysFromPostcode from the Despatch Bay Addressing Service.
+        """
         address_keys_dict_list = []
         for soap_address_key in self.addressing_client.service.GetAddressKeysByPostcode(postcode):
             address_key_dict = self.accounts_client.dict(soap_address_key)
@@ -153,6 +158,9 @@ class DespatchBayAPI(object):
     # Shipping services
 
     def get_available_services(self, shipment_request):
+        """
+        Calls GetAvailableServices from the Despatch Bay Shipping Service.
+        """
         available_service_dict_list = []
         for available_service in self.shipping_client.service.GetAvailableServices(
                 shipment_request.to_soap_object()):
@@ -163,6 +171,9 @@ class DespatchBayAPI(object):
         return available_service_dict_list
 
     def get_available_collection_dates(self, sender_address, courier_id):
+        """
+        Calls GetAvailableCollectionDates from the Despatch Bay Shipping Service.
+        """
         available_collection_dates_response = self.shipping_client.service.GetAvailableCollectionDates(
             sender_address.to_soap_object(), courier_id)
         available_collection_dates_list = []
@@ -172,6 +183,9 @@ class DespatchBayAPI(object):
         return available_collection_dates_list
 
     def get_collection(self, collection_id):
+        """
+        Calls GetCollection from the Despatch Bay Shipping Service.
+        """
         collection_dict = self.shipping_client.dict(
             self.shipping_client.service.GetCollection(collection_id))
         return Address.from_dict(
@@ -180,6 +194,9 @@ class DespatchBayAPI(object):
         )
 
     def get_collections(self):
+        """
+        Calls GetCollections from the Despatch Bay Shipping Service.
+        """
         collections_dict_list = []
         for found_collection in self.shipping_client.service.GetCollections():
             collection_dict = self.shipping_client.dict(found_collection)
@@ -192,6 +209,9 @@ class DespatchBayAPI(object):
         return collections_dict_list
 
     def get_shipment(self, shipment_id):
+        """
+        Calls GetShipment from the Despatch Bay Shipping Service.
+        """
         shipment_dict = self.shipping_client.dict(
             self.shipping_client.service.GetShipment(shipment_id))
         return ShipmentReturn.from_dict(
@@ -200,9 +220,15 @@ class DespatchBayAPI(object):
         )
 
     def add_shipment(self, shipment_request):
+        """
+        Calls AddShipment from the Despatch Bay Shipping Service.
+        """
         return self.shipping_client.service.AddShipment(shipment_request.to_soap_object())
 
     def book_shipments(self, shipment_ids):
+        """
+        Calls BookShipments from the Despatch Bay Shipping Service.
+        """
         array_of_shipment_id = self.shipping_client.factory.create('ns1:ArrayOfShipmentID')
         array_of_shipment_id.item = shipment_ids
         booked_shipments_list = []
@@ -217,17 +243,29 @@ class DespatchBayAPI(object):
         return booked_shipments_list
 
     def cancel_shipment(self, shipment_id):
+        """
+        Calls CancelShipment from the Despatch Bay Shipping Service.
+        """
         return self.shipping_client.service.CancelShipment(shipment_id)
 
     # Tracking services
 
     def get_tracking(self, tracking_number):
+        """
+        Calls GetTracking from the Despatch Bay Tracking Service.
+        """
         return self.tracking_client.service.GetTracking(tracking_number)
 
-    # Labels services
+    # Documents services
 
     def fetch_shipment_labels(self, document_id, **kwargs):
+        """
+        Fetches labels from the Despatch Bay documents API.
+        """
         return self.pdf_client.fetch_shipment_labels(document_id, **kwargs)
 
     def fetch_manifest(self, collection_id):
+        """
+        Fetches manifests from the Despatch Bay documents API.
+        """
         return self.pdf_client.fetch_manifest(collection_id)

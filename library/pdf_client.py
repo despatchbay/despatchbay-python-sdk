@@ -9,7 +9,7 @@ import exception
 class PdfClient(object):
     API_URI = 'http://api.despatchbay.st/documents/v1/labels'
 
-    def __init__(self, credentials):
+    def __init__(self, credentials, ):
         self.auth = {
             'api_user': credentials['api_user'],
             'api_key': credentials['api_key']
