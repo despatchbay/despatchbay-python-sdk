@@ -15,6 +15,7 @@ from collection import Collection
 from shipment_return import ShipmentReturn
 from pdf_client import PdfClient
 from payment_method import PaymentMethod
+from automatic_topup_settings import AutomaticTopupSettings
 
 
 class DespatchBayAPI(object):
@@ -130,6 +131,16 @@ class DespatchBayAPI(object):
                 )
             )
         return payment_methods
+
+    def enable_automatic_topups(self, minimum_balance=None, topup_amount=None,
+                                payment_method_id=None, automatic_topup_settings_object=None):
+        if not automatic_topup_settings_object:
+            automatic_topup_settings_object = AutomaticTopupSettings(
+                self, minimum_balance, topup_amount, payment_method_id)
+        return self.account_client.service.EnableAutomaticTopups(automatic_topup_settings_object.to_soap_object())
+
+    def disable_automatic_topups(self):
+        return self.account_client.service.DisableAutomaticTopups()
 
     # Addressing Services
 
