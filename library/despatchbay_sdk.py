@@ -18,7 +18,7 @@ from payment_method import PaymentMethod
 from automatic_topup_settings import AutomaticTopupSettings
 
 
-class DespatchBayAPI(object):
+class DespatchBaySDK(object):
 
     def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', api_version='15'):
         soap_url_template = 'http://{}/soap/v{}/{}?wsdl'
@@ -134,12 +134,21 @@ class DespatchBayAPI(object):
 
     def enable_automatic_topups(self, minimum_balance=None, topup_amount=None,
                                 payment_method_id=None, automatic_topup_settings_object=None):
+        """
+        Calls EnableAutomaticTopups from the Despatch Bay Account Service.
+
+        Passing an automatic_topup_settings object takes priority over using individual arguments.
+        """
         if not automatic_topup_settings_object:
             automatic_topup_settings_object = AutomaticTopupSettings(
                 self, minimum_balance, topup_amount, payment_method_id)
-        return self.account_client.service.EnableAutomaticTopups(automatic_topup_settings_object.to_soap_object())
+        return self.account_client.service.EnableAutomaticTopups(
+            automatic_topup_settings_object.to_soap_object())
 
     def disable_automatic_topups(self):
+        """
+        Calls DisableAutomaticTopups from the Despatch Bay Account Service.
+        """
         return self.account_client.service.DisableAutomaticTopups()
 
     # Addressing Services
