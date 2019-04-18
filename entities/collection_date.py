@@ -5,12 +5,19 @@ class CollectionDate(object):
         self.date = date
 
     @classmethod
-    def from_dict(cls, client, **kwargs):
+    def from_dict(cls, client, soap_dict):
+        """
+        Alternative constructor, builds entity object from a dictionary representation of
+        a SOAP response created by the SOAP client.
+        """
         return cls(
             client=client,
-            date=kwargs.get('CollectionDate', None)
+            date=soap_dict.get('CollectionDate', None)
         )
 
     def to_soap_object(self):
-        suds_object = self.client.factory.create(self.type_name)
+        """
+        Creates a SOAP client object representation of this entity.
+        """
+        suds_object = self.client.shipping_client.factory.create(self.type_name)
         suds_object.CollectionDate = self.date

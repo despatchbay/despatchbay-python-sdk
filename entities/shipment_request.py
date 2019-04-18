@@ -1,8 +1,6 @@
-import recipient, sender, parcel
-
-
 class ShipmentRequest(object):
-    def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None, sender_address=None, recipient_address=None, follow_shipment=None):
+    def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None,
+                 sender_address=None, recipient_address=None, follow_shipment=None):
         self.client = client
         self.type_name = 'ns1:ShipmentRequestType'
         self.service_id = service_id
@@ -14,15 +12,18 @@ class ShipmentRequest(object):
         self.follow_shipment = follow_shipment
 
     def to_soap_object(self):
-        suds_object = self.client.factory.create(self.type_name)
-        parcel_array = self.client.factory.create('ns1:ArrayOfParcelType')
+        """
+        Creates a SOAP client object representation of this entity.
+        """
+        suds_object = self.client.shipping_client.factory.create(self.type_name)
+        parcel_array = self.client.shipping_client.factory.create('ns1:ArrayOfParcelType')
         soap_parcel_list = []
         for item in self.parcels:
             soap_parcel_list.append(item.to_soap_object())
         parcel_array.item = soap_parcel_list
         parcel_array._arrayType = "urn:ParcelType[]"
         if isinstance(self.collection_date, str):
-            collection_date = self.client.factory.create('CollectionDateType')
+            collection_date = self.client.shipping_client.factory.create('CollectionDateType')
             collection_date.CollectionDate = self.collection_date
         else:
             collection_date = self.collection_date

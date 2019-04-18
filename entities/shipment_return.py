@@ -1,4 +1,5 @@
-import recipient, sender, parcel
+import recipient
+import parcel
 
 
 class ShipmentReturn(object):
@@ -6,7 +7,8 @@ class ShipmentReturn(object):
                  service_id=None, parcels=None, client_reference=None, recipient_address=None,
                  is_followed=None, is_printed=None, is_despatched=None, is_delivered=None,
                  is_cancelled=None, labels_url=None):
-        self.client = client
+        self.despatchbay_client = client
+        self.shipping_client = client.shipping_client
         self.type_name = 'ns1:ShipmentReturnType'
         self.shipment_id = shipment_id
         self.shipment_document_id = shipment_document_id
@@ -14,6 +16,7 @@ class ShipmentReturn(object):
         self.service_id = service_id
         self.parcels = parcels
         self.client_reference = client_reference
+        self.recipient_address = recipient_address
         self.is_followed = is_followed
         self.is_printed = is_printed
         self.is_despatched = is_despatched
@@ -22,53 +25,50 @@ class ShipmentReturn(object):
         self.labels_url = labels_url
 
     @classmethod
-    def from_dict(cls, client, **kwargs):
+    def from_dict(cls, client, soap_dict):
+        """
+        Alternative constructor, builds entity object from a dictionary representation of
+        a SOAP response created by the SOAP client.
+        """
         parcel_array = []
-        for parcel_item in kwargs.get('Parcels'):
-            parcel_array.append(parcel.Parcel.from_dict(
-                client,
-                **client.dict(parcel_item)
-            ))
+        for parcel_item in soap_dict.get('Parcels'):
+            parcel_array.append(
+                parcel.Parcel.from_dict(
+                    client,
+                    client.shipping_client.dict(parcel_item)
+                )
+            )
         return cls(
             client=client,
-            shipment_id=kwargs.get('ShipmentID'),
-            shipment_document_id=kwargs.get('ShipmentDocumentID'),
-            collection_id=kwargs.get('CollectionID'),
-            service_id=kwargs.get('ServiceID'),
+            shipment_id=soap_dict.get('ShipmentID'),
+            shipment_document_id=soap_dict.get('ShipmentDocumentID'),
+            collection_id=soap_dict.get('CollectionID'),
+            service_id=soap_dict.get('ServiceID'),
             parcels=parcel_array,
-            client_reference=kwargs.get('ClientReference'),
+            client_reference=soap_dict.get('ClientReference'),
             recipient_address=recipient.Recipient.from_dict(
                 client,
-                **client.dict(kwargs.get('RecipientAddress', None))
+                client.shipping_client.dict(soap_dict.get('RecipientAddress', None))
             ),
-            is_followed=kwargs.get('IsFollowed'),
-            is_printed=kwargs.get('IsPrinted'),
-            is_despatched=kwargs.get('IsDespatched'),
-            is_delivered=kwargs.get('IsDelivered'),
-            is_cancelled=kwargs.get('IsCancelled'),
-            labels_url=kwargs.get('LabelsURL', None)
+            is_followed=soap_dict.get('IsFollowed'),
+            is_printed=soap_dict.get('IsPrinted'),
+            is_despatched=soap_dict.get('IsDespatched'),
+            is_delivered=soap_dict.get('IsDelivered'),
+            is_cancelled=soap_dict.get('IsCancelled'),
+            labels_url=soap_dict.get('LabelsURL', None)
         )
 
-    # todo: decide if needed
-    # todo: decide if needed
-    # def to_soap_object(self):
-    #     suds_object = self.client.factory.create(self.type_name)
-    #     parcel_array = self.client.factory.create('ns1:ArrayOfParcelType')
-    #     soap_parcel_list = []
-    #     for item in self.parcels:
-    #         soap_parcel_list.append(item.to_soap_object())
-    #     parcel_array.item = soap_parcel_list
-    #     parcel_array._arrayType = "urn:ParcelType[]"
-    #     if isinstance(self.collection_date, str):
-    #         collection_date = self.client.factory.create('CollectionDateType')
-    #         collection_date.CollectionDate = self.collection_date
-    #     else:
-    #         collection_date = self.collection_date
-    #     suds_object.ServiceID = self.service_id
-    #     suds_object.Parcels = parcel_array
-    #     suds_object.ClientReference = self.client_reference
-    #     suds_object.CollectionDate = collection_date
-    #     suds_object.SenderAddress = self.sender_address.to_soap_object()
-    #     suds_object.RecipientAddress = self.recipient_address.to_soap_object()
-    #     suds_object.FollowShipment = self.follow_shipment
-    #     return suds_object
+    def cancel(self):
+        """
+        Makes a CancelShipment request through the Despatch Bay API client.
+        """
+        cancel_return = self.despatchbay_client.cancel_shipment(self.shipment_id)
+        if cancel_return:
+            self.is_cancelled = True
+        return cancel_return
+
+    def get_labels(self, **kwargs):
+        """
+        Fetches label pdf through the Despatch Bay API client.
+        """
+        return self.despatchbay_client.fetch_shipment_labels(self.shipment_document_id, **kwargs)
