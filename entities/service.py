@@ -1,10 +1,10 @@
-import courier
+from entities import courier
 
 
 class Service(object):
-    def __init__(self,client, service_id, service_format, name, cost, courier):
+    def __init__(self, client, service_id, service_format, name, cost, courier):
         self.client = client
-        self.type_name = 'ns1:CourierType'
+        self.type_name = 'ns1:ServiceType'
         self.service_id = service_id
         self.format = service_format
         self.name = name
@@ -34,6 +34,6 @@ class Service(object):
         Creates a SOAP client object representation of this entity.
         """
         suds_object = self.client.factory.shipping_client.create(self.type_name)
-        suds_object.CourierID= self.service_id
+        suds_object.CourierID = self.service_id
         suds_object.CourierName = self.name
         return suds_object

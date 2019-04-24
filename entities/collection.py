@@ -1,11 +1,49 @@
-import sender, courier, collection_date
+from entities import sender, courier, collection_date
+from entities.entity import Entity
 
 
-class Collection(object):
+class Collection(Entity):
+
+    SOAP_MAP = {
+        "CollectionID": {
+            "property": "collection_id",
+            "type": "string"
+        },
+        "CollectionDocumentID": {
+            "property": "document_id",
+            "type": "string"
+        },
+        "CollectionType": {
+            "property": "collection_type",
+            "type": "string"
+        },
+        "CollectionDate": {
+            "property": "date",
+            "type": "string"
+        },
+        "SenderAddress": {
+            "property": "sender_address",
+            "type": "string"
+        },
+        "Courier": {
+            "property": "collection_courier",
+            "type": "string"
+        },
+        "LabelsURL": {
+            "property": "labels_url",
+            "type": "string"
+        },
+        "Manifest": {
+            "property": "manifest_url",
+            "type": "string"
+        }
+    }
+
+    SOAP_TYPE = 'ns1:CollectionReturnType'
+
     def __init__(self, client, collection_id=None, document_id=None, collection_type=None, date=None,
                  sender_address=None, collection_courier=None, labels_url=None, manifest_url=None):
-        self.client = client
-        self.type_name = 'ns1:CollectionReturnType'
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.collection_id = collection_id
         self.document_id = document_id
         self.collection_type = collection_type
@@ -41,18 +79,3 @@ class Collection(object):
             labels_url=soap_dict.get('LabelsURL', None),
             manifest_url=soap_dict.get('Manifest', None)
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        suds_object.CollectionID = self.collection_id
-        suds_object.CollectionDocumentID = self.document_id
-        suds_object.CollectionType = self.collection_type
-        suds_object.CollectionDate = self.date
-        suds_object.SenderAddress = self.sender_address
-        suds_object.Courier = self.collection_courier
-        suds_object.LabelsURL = self.labels_url
-        suds_object.Manifest = self.manifest_url
-        return suds_object

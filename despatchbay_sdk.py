@@ -1,21 +1,47 @@
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
+import suds
+from exception import AuthorizationException,\
+    ApiException, ConnectionException, RateLimitException
+from entities.parcel import Parcel
+from entities.address import Address
+from entities.recipient import Recipient
+from entities.sender import Sender
+from entities.shipment_request import ShipmentRequest
+from entities.account import Account
+from entities.account_balance import AccountBalance
+from entities.address_key import AddressKey
+from entities.service import Service
+from entities.collection import Collection
+from entities.shipment_return import ShipmentReturn
+from entities.payment_method import PaymentMethod
+from entities.automatic_topup_settings import AutomaticTopupSettings
+from entities.collection_date import CollectionDate
+from documents_client import DocumentsClient
 
 
-from parcel import Parcel
-from address import Address
-from recipient import Recipient
-from sender import Sender
-from shipment_request import ShipmentRequest
-from account import Account
-from account_balance import AccountBalance
-from address_key import AddressKey
-from service import Service
-from collection import Collection
-from shipment_return import ShipmentReturn
-from pdf_client import PdfClient
-from payment_method import PaymentMethod
-from automatic_topup_settings import AutomaticTopupSettings
+def handle_suds_fault(error):
+    exception_info = error.args[0]
+    if 'Unauthorized' in exception_info:
+        raise AuthorizationException('Invalid API credentials') from error
+    elif 'Could not connect to host' in exception_info:
+        raise ConnectionException('Failed to connect to the Despatch Bay API') from error
+    elif 'Your access rate limit for this service has been exceeded' in exception_info:
+        raise RateLimitException(exception_info)
+    else:
+        raise ApiException(error) from error
+
+
+def try_except(fn):
+    """
+    A decorator to catch suds exceptions
+    """
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except suds.WebFault as detail:
+            handle_suds_fault(detail)
+    return wrapped
 
 
 class DespatchBaySDK(object):
@@ -35,7 +61,7 @@ class DespatchBaySDK(object):
             shipping_url, transport=self.create_transport(api_user, api_key))
         self.tracking_client = Client(
             tracking_url, transport=self.create_transport(api_user, api_key))
-        self.pdf_client = PdfClient(api_url=documents_url)
+        self.pdf_client = DocumentsClient(api_url=documents_url)
 
     @staticmethod
     def create_transport(username, password):
@@ -75,6 +101,7 @@ class DespatchBaySDK(object):
 
     # Account Services
 
+    @try_except
     def get_account(self):
         """Calls GetAccount from the Despatch Bay Account Service."""
         account_dict = self.account_client.dict(self.account_client.service.GetAccount())
@@ -83,6 +110,7 @@ class DespatchBaySDK(object):
             account_dict
         )
 
+    @try_except
     def get_account_balance(self):
         """
         Calls GetBalance from the Despatch Bay Account Service.
@@ -93,6 +121,7 @@ class DespatchBaySDK(object):
             balance_dict
         )
 
+    @try_except
     def get_sender_addresses(self):
         """
         Calls GetSenderAddresses from the Despatch Bay Account Service.
@@ -105,6 +134,7 @@ class DespatchBaySDK(object):
                 sender_address_dict))
         return sender_addresses_dict_list
 
+    @try_except
     def get_services(self):
         """
         Calls GetServices from the Despatch Bay Account Service.
@@ -118,6 +148,7 @@ class DespatchBaySDK(object):
                 ))
         return service_list
 
+    @try_except
     def get_payment_methods(self):
         """
         Calls GetPaymentMethods from the Despatch Bay Account Service.
@@ -132,6 +163,7 @@ class DespatchBaySDK(object):
             )
         return payment_methods
 
+    @try_except
     def enable_automatic_topups(self, minimum_balance=None, topup_amount=None,
                                 payment_method_id=None, automatic_topup_settings_object=None):
         """
@@ -145,6 +177,7 @@ class DespatchBaySDK(object):
         return self.account_client.service.EnableAutomaticTopups(
             automatic_topup_settings_object.to_soap_object())
 
+    @try_except
     def disable_automatic_topups(self):
         """
         Calls DisableAutomaticTopups from the Despatch Bay Account Service.
@@ -153,6 +186,7 @@ class DespatchBaySDK(object):
 
     # Addressing Services
 
+    @try_except
     def find_address(self, postcode, property_string):
         """
         Calls FindAddress from the Despatch Bay Addressing Service.
@@ -166,6 +200,7 @@ class DespatchBaySDK(object):
             found_address_dict
         )
 
+    @try_except
     def get_address_by_key(self, key):
         """
         Calls GetAddressByKey from the Despatch Bay Addressing Service.
@@ -178,6 +213,7 @@ class DespatchBaySDK(object):
             found_address_dict
         )
 
+    @try_except
     def get_address_keys_by_postcode(self, postcode):
         """
         Calls GetAddressKeysFromPostcode from the Despatch Bay Addressing Service.
@@ -192,6 +228,7 @@ class DespatchBaySDK(object):
 
     # Shipping services
 
+    @try_except
     def get_available_services(self, shipment_request):
         """
         Calls GetAvailableServices from the Despatch Bay Shipping Service.
@@ -205,6 +242,7 @@ class DespatchBaySDK(object):
                 available_service_dict))
         return available_service_dict_list
 
+    @try_except
     def get_available_collection_dates(self, sender_address, courier_id):
         """
         Calls GetAvailableCollectionDates from the Despatch Bay Shipping Service.
@@ -214,9 +252,10 @@ class DespatchBaySDK(object):
         available_collection_dates_list = []
         for collection_date in available_collection_dates_response:
             collection_date_dict = self.shipping_client.dict(collection_date)
-            available_collection_dates_list.append(collection_date_dict['CollectionDate'])
+            available_collection_dates_list.append(CollectionDate.from_dict(self, collection_date_dict))
         return available_collection_dates_list
 
+    @try_except
     def get_collection(self, collection_id):
         """
         Calls GetCollection from the Despatch Bay Shipping Service.
@@ -228,6 +267,7 @@ class DespatchBaySDK(object):
             collection_dict
         )
 
+    @try_except
     def get_collections(self):
         """
         Calls GetCollections from the Despatch Bay Shipping Service.
@@ -243,6 +283,7 @@ class DespatchBaySDK(object):
             )
         return collections_dict_list
 
+    @try_except
     def get_shipment(self, shipment_id):
         """
         Calls GetShipment from the Despatch Bay Shipping Service.
@@ -254,12 +295,14 @@ class DespatchBaySDK(object):
             shipment_dict
         )
 
+    @try_except
     def add_shipment(self, shipment_request):
         """
         Calls AddShipment from the Despatch Bay Shipping Service.
         """
         return self.shipping_client.service.AddShipment(shipment_request.to_soap_object())
 
+    @try_except
     def book_shipments(self, shipment_ids):
         """
         Calls BookShipments from the Despatch Bay Shipping Service.
@@ -277,6 +320,7 @@ class DespatchBaySDK(object):
             )
         return booked_shipments_list
 
+    @try_except
     def cancel_shipment(self, shipment_id):
         """
         Calls CancelShipment from the Despatch Bay Shipping Service.
@@ -285,6 +329,7 @@ class DespatchBaySDK(object):
 
     # Tracking services
 
+    @try_except
     def get_tracking(self, tracking_number):
         """
         Calls GetTracking from the Despatch Bay Tracking Service.

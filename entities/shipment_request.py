@@ -1,37 +1,64 @@
-class ShipmentRequest(object):
+from entities.collection_date import CollectionDate
+from entities.entity import Entity
+
+
+class ShipmentRequest(Entity):
+    SOAP_MAP = {
+        'ServiceID': {
+            'property': 'service_id',
+            'type': 'string',
+        },
+        'Parcels': {
+            'property': 'parcels',
+            'type': 'entityArray',
+            'soap_type': 'ns1:ArrayOfParcelType',
+        },
+        'ClientReference': {
+            'property': 'client_reference',
+            'type': 'string',
+        },
+        'CollectionDate': {
+            'property': 'collection_date',
+            'type': 'entity',
+        },
+        'RecipientAddress': {
+            'property': 'recipient_address',
+            'type': 'entity',
+        },
+        'SenderAddress': {
+            'property': 'sender_address',
+            'type': 'entity',
+        },
+        'FollowShipment': {
+            'property': 'follow_shipment',
+            'type': 'boolean',
+        }
+    }
+
+    SOAP_TYPE = 'ns1:ShipmentRequestType'
+
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None,
                  sender_address=None, recipient_address=None, follow_shipment=None):
-        self.client = client
-        self.type_name = 'ns1:ShipmentRequestType'
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
+        self._despatchbay_client = client
         self.service_id = service_id
         self.parcels = parcels
         self.client_reference = client_reference
-        self.collection_date = collection_date
+        self._collection_date = self.validate_collection_date_object(collection_date)
         self.sender_address = sender_address
         self.recipient_address = recipient_address
         self.follow_shipment = follow_shipment
 
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        parcel_array = self.client.shipping_client.factory.create('ns1:ArrayOfParcelType')
-        soap_parcel_list = []
-        for item in self.parcels:
-            soap_parcel_list.append(item.to_soap_object())
-        parcel_array.item = soap_parcel_list
-        parcel_array._arrayType = "urn:ParcelType[]"
-        if isinstance(self.collection_date, str):
-            collection_date = self.client.shipping_client.factory.create('CollectionDateType')
-            collection_date.CollectionDate = self.collection_date
+    def validate_collection_date_object(self, collection_date):
+        if isinstance(collection_date, str):
+            return CollectionDate(self._despatchbay_client, date=collection_date)
         else:
-            collection_date = self.collection_date
-        suds_object.ServiceID = self.service_id
-        suds_object.Parcels = parcel_array
-        suds_object.ClientReference = self.client_reference
-        suds_object.CollectionDate = collection_date
-        suds_object.SenderAddress = self.sender_address.to_soap_object()
-        suds_object.RecipientAddress = self.recipient_address.to_soap_object()
-        suds_object.FollowShipment = self.follow_shipment
-        return suds_object
+            return collection_date
+
+    @property
+    def collection_date(self):
+        return self._collection_date
+
+    @collection_date.setter
+    def collection_date(self, collection_date):
+        self._collection_date = self.validate_collection_date_object(collection_date)

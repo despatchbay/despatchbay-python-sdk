@@ -1,5 +1,3 @@
-from suds import WebFault
-
 class Error(Exception):
     """Base class for other exceptions"""
     pass
@@ -18,4 +16,12 @@ class PaymentException(Error):
 
 
 class ApiException(Error):
+    pass
+
+
+class ConnectionException(Error):
+    pass
+
+
+class RateLimitException(Error):
     pass

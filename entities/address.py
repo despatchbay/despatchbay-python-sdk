@@ -1,7 +1,44 @@
-class Address(object):
-    def __init__(self, client, company_name, street, locality, town_city, county, postal_code, country_code):
-        self.addressing_client = client.addressing_client
-        self.type_name = 'ns1:AddressType'
+from entities.entity import Entity
+
+
+class Address(Entity):
+
+    SOAP_MAP = {
+        'CompanyName': {
+            'property': 'company_name',
+            'type': 'string',
+        },
+        'Street': {
+            'property': 'street',
+            'type': 'string',
+        },
+        'Locality': {
+            'property': 'locality',
+            'type': 'string',
+        },
+        'TownCity': {
+            'property': 'town_city',
+            'type': 'string',
+        },
+        'County': {
+            'property': 'county',
+            'type': 'string',
+        },
+        'PostalCode': {
+            'property': 'postal_code',
+            'type': 'string',
+        },
+        'CountryCode': {
+            'property': 'country_code',
+            'type': 'string',
+        }
+    }
+
+    SOAP_TYPE = 'ns1:AddressType'
+
+    def __init__(self, client, company_name=None, street=None, locality=None, town_city=None, county=None,
+                 postal_code=None, country_code=None):
+        super().__init__(self.SOAP_TYPE, client.addressing_client, self.SOAP_MAP)
         self.company_name = company_name
         self.street = street
         self.locality = locality
@@ -13,7 +50,7 @@ class Address(object):
     @classmethod
     def from_dict(cls, client, soap_dict):
         """
-        Alternative constructor, builds entity object from a dictionary representation of
+        Alternative initialiser, builds entity object from a dictionary representation of
         a SOAP response created by the SOAP client.
         """
         return cls(
@@ -27,16 +64,3 @@ class Address(object):
             country_code=soap_dict.get('CountryCode', None)
         )
 
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.addressing_client.factory.create(self.type_name)
-        suds_object.CompanyName = self.company_name
-        suds_object.Street = self.street
-        suds_object.Locality = self.locality
-        suds_object.TownCity = self.town_city
-        suds_object.County = self.county
-        suds_object.PostalCode = self.postal_code
-        suds_object.CountryCode = self.country_code
-        return suds_object

@@ -1,11 +1,10 @@
 from urllib.parse import urlencode
-from entities import pdf
+from entities import document
+import exception
 import requests
 
-import exception
 
-
-class PdfClient(object):
+class DocumentsClient(object):
     def __init__(self, api_url='http://api.despatchbay.com/documents/v1'):
         self.api_url = api_url
 
@@ -49,7 +48,7 @@ class PdfClient(object):
             label_request_url = label_request_url + '?' + query_string
         response = requests.get(label_request_url)
         self.handle_response_code(response.status_code)
-        return pdf.Pdf(response.content)
+        return document.Pdf(response.content)
 
     def fetch_manifest(self, collection_id):
         """
@@ -58,4 +57,4 @@ class PdfClient(object):
         manifest_request_url = '{}/manifest/{}'.format(self.api_url, collection_id)
         response = requests.get(manifest_request_url)
         self.handle_response_code(response.status_code)
-        return pdf.Pdf(response.content)
+        return document.Pdf(response.content)

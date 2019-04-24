@@ -1,8 +1,44 @@
-class Parcel(object):
+from entities.entity import Entity
+
+
+class Parcel(Entity):
+
+    SOAP_MAP = {
+        'Weight': {
+            'property': 'weight',
+            'type': 'float'
+        },
+        'Length': {
+            'property': 'length',
+            'type': 'float'
+        },
+        'Width': {
+            'property': 'width',
+            'type': 'float'
+        },
+        'Height': {
+            'property': 'height',
+            'type': 'float'
+        },
+        'Contents': {
+            'property': 'contents',
+            'type': 'string'
+        },
+        'Value': {
+            'property': 'value',
+            'type': 'float'
+        },
+        'TrackingNumber': {
+            'property': 'tracking_number',
+            'type': 'string'
+        }
+    }
+    SOAP_TYPE = 'ns1:ParcelType'
+
     def __init__(self, client, weight=None, length=None, width=None, height=None,
                  contents=None, value=None, tracking_number=None):
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.client = client
-        self.type_name = 'ns1:ParcelType'
         self.weight = weight
         self.length = length
         self.width = width
@@ -27,17 +63,3 @@ class Parcel(object):
             value=soap_dict.get('Value', None),
             tracking_number=soap_dict.get('TrackingNumber', None)
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        suds_object.Weight = self.weight
-        suds_object.Length = self.length
-        suds_object.Width = self.width
-        suds_object.Height = self.height
-        suds_object.Contents = self.contents
-        suds_object.Value = self.value
-        suds_object.TrackingNumber = self.tracking_number
-        return suds_object

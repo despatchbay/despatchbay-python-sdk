@@ -1,10 +1,30 @@
-import account_balance
+from entities import account_balance
+from entities.entity import Entity
 
 
-class Account(object):
+class Account(Entity):
+
+    # todo: entity class
+    SOAP_MAP = {
+        'AccountID': {
+            'property': 'account_id',
+            'type': 'integer'
+        },
+        'AccountName': {
+            'property': 'name',
+            'type': 'string'
+        },
+        'AccountBalance': {
+            'property': 'balance',
+            'type': 'entity',
+            # 'entityClass': 'DespatchBay\Entity\AccountBalance'
+        }
+    }
+
+    SOAP_TYPE = 'ns1:AccountType'
+
     def __init__(self, client, account_id=None, name=None, balance=None):
-        self.account_client = client.account_client
-        self.type_name = 'ns1:AccountType'
+        super().__init__(self.SOAP_TYPE, client.account_client, self.SOAP_MAP)
         self.account_id = account_id
         self.name = name
         self.balance = balance
@@ -24,13 +44,3 @@ class Account(object):
                 client.account_client.dict(soap_dict.get('AccountBalance', None))
             )
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.account_client.factory.create(self.type_name)
-        suds_object.AccountID = self.account_id
-        suds_object.AccountName = self.name
-        suds_object.AccountBalance = self.balance
-        return suds_object

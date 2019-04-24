@@ -1,4 +1,4 @@
-import address
+from entities import address
 
 
 class Recipient(object):

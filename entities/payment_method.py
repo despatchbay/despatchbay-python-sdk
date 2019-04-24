@@ -1,9 +1,28 @@
-class PaymentMethod(object):
+from entities.entity import Entity
+
+
+class PaymentMethod(Entity):
+
+    SOAP_MAP = {
+        'PaymentMethodID': {
+            'property': 'payment_method_id',
+            'type': 'integer'
+        },
+        'Type': {
+            'property': 'payment_method_type',
+            'type': 'string'
+        },
+        'Description': {
+            'property': 'description',
+            'type': 'string'
+        }
+    }
+    SOAP_TYPE = 'ns1:PaymentMethodType'
+
     def __init__(self, client, payment_method_id=None, payment_method_type=None, description=None):
-        self.client = client
-        self.type_name = 'ns1:PaymentMethod'
+        super().__init__(self.SOAP_TYPE, client.account_client, self.SOAP_MAP)
         self.payment_method_id = payment_method_id
-        self.type = payment_method_type
+        self.payment_method_type = payment_method_type
         self.description = description
 
     @classmethod
@@ -18,13 +37,3 @@ class PaymentMethod(object):
             payment_method_type=soap_dict.get('Type', None),
             description=soap_dict.get('Description', None)
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        suds_object.PaymentMethodID = self.payment_method_id
-        suds_object.Type = self.type
-        suds_object.Description = self.description
-        return suds_object

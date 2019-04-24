@@ -1,8 +1,23 @@
-class Courier(object):
-    def __init__(self, client, courier_id, name):
-        self.client = client
-        self.type_name = 'ns1:CourierType'
-        self.id = courier_id
+from entities.entity import Entity
+
+
+class Courier(Entity):
+
+    SOAP_MAP = {
+        'CourierID': {
+            'property': 'courier_id',
+            'type': 'integer'
+        },
+        'CourierName': {
+            'property': 'name',
+            'type': 'string'
+        }
+    }
+    SOAP_TYPE = 'ns1:CourierType'
+
+    def __init__(self, client, courier_id=None, name=None):
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
+        self.courier_id = courier_id
         self.name = name
 
     @classmethod
@@ -16,12 +31,3 @@ class Courier(object):
             courier_id=soap_dict.get('CourierID', None),
             name=soap_dict.get('CourierName', None)
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        suds_object.CourierID= self.id
-        suds_object.CourierName = self.name
-        return suds_object

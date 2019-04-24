@@ -1,7 +1,21 @@
-class AddressKey(object):
+from entities.entity import Entity
+
+
+class AddressKey(Entity):
+    SOAP_MAP = {
+        'Key': {
+            'property': 'key',
+            'type': 'string',
+        },
+        'Address': {
+            'property': 'address',
+            'type': 'string',
+        }
+    }
+    SOAP_TYPE = 'ns1:AddressKeyType'
+
     def __init__(self, client, key, address):
-        self.addressing_client = client.addressing_client
-        self.type_name = 'ns1:AddressKeyType'
+        super().__init__(self.SOAP_TYPE, client, self.SOAP_MAP)
         self.key = key
         self.address = address
 
@@ -16,12 +30,3 @@ class AddressKey(object):
             key=soap_dict.get('Key', None),
             address=soap_dict.get('Address', None)
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.addressing_client.factory.create(self.type_name)
-        suds_object.key = self.key
-        suds_object.address = self.address
-        return suds_object
