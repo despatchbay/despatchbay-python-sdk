@@ -1,5 +1,5 @@
-from entities.collection_date import CollectionDate
-from entities.entity import Entity
+from despatchbay.entities.collection_date import CollectionDate
+from entity import Entity
 
 
 class ShipmentRequest(Entity):

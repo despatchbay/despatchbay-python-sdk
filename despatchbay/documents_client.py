@@ -1,5 +1,5 @@
 from urllib.parse import urlencode
-from entities import document
+from despatchbay.entities import document
 import exception
 import requests
 

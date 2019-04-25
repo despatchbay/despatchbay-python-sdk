@@ -1,4 +1,4 @@
-from entities import address
+from despatchbay.entities import address
 
 
 class Recipient(object):

@@ -1,5 +1,5 @@
-from entities import account_balance
-from entities.entity import Entity
+from despatchbay.entities import account_balance
+from entity import Entity
 
 
 class Account(Entity):

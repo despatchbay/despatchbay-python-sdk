@@ -1,4 +1,4 @@
-from entities import courier
+from despatchbay.entities import courier
 
 
 class Service(object):

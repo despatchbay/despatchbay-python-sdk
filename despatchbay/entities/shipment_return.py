@@ -1,5 +1,5 @@
-from entities import recipient
-from entities import parcel
+from despatchbay.entities import recipient
+from despatchbay.entities import parcel
 
 
 class ShipmentReturn(object):

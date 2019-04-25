@@ -1,5 +1,5 @@
-from entities import sender, courier, collection_date
-from entities.entity import Entity
+from despatchbay.entities import sender, courier, collection_date
+from entity import Entity
 
 
 class Collection(Entity):

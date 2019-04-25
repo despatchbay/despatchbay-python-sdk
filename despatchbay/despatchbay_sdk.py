@@ -3,21 +3,21 @@ from suds.transport.http import HttpAuthenticated
 import suds
 from exception import AuthorizationException,\
     ApiException, ConnectionException, RateLimitException
-from entities.parcel import Parcel
-from entities.address import Address
-from entities.recipient import Recipient
-from entities.sender import Sender
-from entities.shipment_request import ShipmentRequest
-from entities.account import Account
-from entities.account_balance import AccountBalance
-from entities.address_key import AddressKey
-from entities.service import Service
-from entities.collection import Collection
-from entities.shipment_return import ShipmentReturn
-from entities.payment_method import PaymentMethod
-from entities.automatic_topup_settings import AutomaticTopupSettings
-from entities.collection_date import CollectionDate
-from documents_client import DocumentsClient
+from despatchbay.entities.parcel import Parcel
+from despatchbay.entities.address import Address
+from despatchbay.entities.recipient import Recipient
+from despatchbay.entities.sender import Sender
+from despatchbay.entities.shipment_request import ShipmentRequest
+from despatchbay.entities.account import Account
+from despatchbay.entities.account_balance import AccountBalance
+from despatchbay.entities.address_key import AddressKey
+from despatchbay.entities.service import Service
+from despatchbay.entities.collection import Collection
+from despatchbay.entities.shipment_return import ShipmentReturn
+from despatchbay.entities.payment_method import PaymentMethod
+from despatchbay.entities.automatic_topup_settings import AutomaticTopupSettings
+from despatchbay.entities.collection_date import CollectionDate
+from despatchbay.documents_client import DocumentsClient
 
 
 def handle_suds_fault(error):
