@@ -1,6 +1,5 @@
 from urllib.parse import urlencode
-from despatchbay.entities import document
-import exception
+from despatchbay import exceptions
 import requests
 
 
@@ -16,15 +15,15 @@ class DocumentsClient(object):
         if code == 200:
             return True
         elif code == 400:
-            raise exception.InvalidArgumentException('The PDF Labels API was unable to process the request')
+            raise exceptions.InvalidArgumentException('The PDF Labels API was unable to process the request')
         elif code == 401:
-            raise exception.AuthorizationException('Unauthorized')
+            raise exceptions.AuthorizationException('Unauthorized')
         elif code == 402:
-            raise exception.PaymentException('Insufficient Despatch Bay account balance')
+            raise exceptions.PaymentException('Insufficient Despatch Bay account balance')
         elif code == 404:
-            raise exception.ApiException('Unknown shipment ID')
+            raise exceptions.ApiException('Unknown shipment ID')
         else:
-            raise exception.ApiException('An unexpected error occurred (HTTP {})'.format(code))
+            raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
 
     def fetch_shipment_labels(self, ship_collect_ids, layout=None, label_format=None, label_dpi=None):
         """
