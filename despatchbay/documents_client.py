@@ -1,6 +1,41 @@
 from urllib.parse import urlencode
-from despatchbay import exceptions
+from . import exceptions
 import requests
+import base64
+
+class Document(object):
+    def __init__(self, data):
+        if self.is_pdf(data):
+            self.data = data
+        else:
+            raise TypeError("File returned from api is not a valid PDF.")
+
+    @staticmethod
+    def is_pdf(data):
+        """
+        Performs a rudimentary check to see if the data APPEARS to be a
+        valid POF file.
+        """
+        return data[0:4].decode() == '%PDF'
+
+    def get_raw(self):
+        """
+        Returns the raw data used to create the entity.
+        """
+        return self.data
+
+    def get_base64(self):
+        """
+        Base 64 encodes the PDF data before returning it.
+        """
+        return base64.b64decode(self.data)
+
+    def download(self, path):
+        """
+        Saves the file to the specified location.
+        """
+        with open(path, 'wb') as document_file:
+            document_file.write(self.data)
 
 
 class DocumentsClient(object):
@@ -47,7 +82,7 @@ class DocumentsClient(object):
             label_request_url = label_request_url + '?' + query_string
         response = requests.get(label_request_url)
         self.handle_response_code(response.status_code)
-        return document.Pdf(response.content)
+        return Document(response.content)
 
     def fetch_manifest(self, collection_id):
         """
@@ -56,4 +91,4 @@ class DocumentsClient(object):
         manifest_request_url = '{}/manifest/{}'.format(self.api_url, collection_id)
         response = requests.get(manifest_request_url)
         self.handle_response_code(response.status_code)
-        return document.Pdf(response.content)
+        return Document(response.content)

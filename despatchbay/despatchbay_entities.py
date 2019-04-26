@@ -1,6 +1,3 @@
-import base64
-
-
 class Entity(object):
 
     def __init__(self, soap_type, soap_client, soap_map):
@@ -41,8 +38,6 @@ class Entity(object):
 
 
 class Account(Entity):
-
-    # todo: entity class
     SOAP_MAP = {
         'AccountID': {
             'property': 'account_id',
@@ -58,7 +53,6 @@ class Account(Entity):
             # 'entityClass': 'DespatchBay\Entity\AccountBalance'
         }
     }
-
     SOAP_TYPE = 'ns1:AccountType'
 
     def __init__(self, client, account_id=None, name=None, balance=None):
@@ -95,7 +89,6 @@ class AccountBalance(Entity):
             'type': 'float'
         }
     }
-
     SOAP_TYPE = 'ns1:AccountBalanceType'
 
     def __init__(self, client, balance=None, available=None):
@@ -148,7 +141,6 @@ class Address(Entity):
             'type': 'string',
         }
     }
-
     SOAP_TYPE = 'ns1:AddressType'
 
     def __init__(self, client, company_name=None, street=None, locality=None, town_city=None, county=None,
@@ -284,7 +276,6 @@ class Collection(Entity):
             "type": "string"
         }
     }
-
     SOAP_TYPE = 'ns1:CollectionReturnType'
 
     def __init__(self, client, collection_id=None, document_id=None, collection_type=None, date=None,
@@ -334,7 +325,6 @@ class CollectionDate(Entity):
             "type": "string"
         }
     }
-
     SOAP_TYPE = 'ns1:CollectionDateType'
 
     def __init__(self, client, date=None):
@@ -383,42 +373,6 @@ class Courier(Entity):
             courier_id=soap_dict.get('CourierID', None),
             name=soap_dict.get('CourierName', None)
         )
-
-
-class Document(object):
-    # todo: dry out or move
-    def __init__(self, data):
-        if self.is_pdf(data):
-            self.data = data
-        else:
-            raise TypeError("File returned from api is not a valid PDF.")
-
-    @staticmethod
-    def is_pdf(data):
-        """
-        Performs a rudimentary check to see if the data APPEARS to be a
-        valid POF file.
-        """
-        return data[0:4].decode() == '%PDF'
-
-    def get_raw(self):
-        """
-        Returns the raw data used to create the entity.
-        """
-        return self.data
-
-    def get_base64(self):
-        """
-        Base 64 encodes the PDF data before returning it.
-        """
-        return base64.b64decode(self.data)
-
-    def download(self, path):
-        """
-        Saves the PDF to the specified location.
-        """
-        with open(path, 'wb') as pdf_file:
-            pdf_file.write(self.data)
 
 
 class Parcel(Entity):
@@ -523,11 +477,29 @@ class PaymentMethod(Entity):
         )
 
 
-class Recipient(object):
-    # todo: dry out
+class Recipient(Entity):
+    SOAP_MAP = {
+        'RecipientName': {
+            'property': 'name',
+            'type': 'string',
+        },
+        'RecipientTelephone': {
+            'property': 'telephone',
+            'type': 'string',
+        },
+        'RecipientEmail': {
+            'property': 'email',
+            'type': 'string',
+        },
+        'RecipientAddress': {
+            'property': 'recipient_address',
+            'type': 'entity'
+        },
+    }
+    SOAP_TYPE = 'ns1:RecipientAddressType'
+
     def __init__(self, client, name=None, telephone=None, email=None, recipient_address=None):
-        self.shipping_client = client.shipping_client
-        self.type_name = 'ns1:RecipientAddressType'
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.name = name
         self.telephone = telephone
         self.email = email
@@ -550,28 +522,40 @@ class Recipient(object):
             )
         )
 
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.shipping_client.factory.create(self.type_name)
-        suds_object.RecipientName = self.name
-        suds_object.RecipientTelephone = self.telephone
-        suds_object.RecipientEmail = self.email
-        suds_object.RecipientAddress = self.recipient_address.to_soap_object()
-        return suds_object
 
+class Sender(Entity):
+    # todo handle sender address id
+    SOAP_MAP = {
+        'SenderName': {
+            'property': 'name',
+            'type': 'string',
+        },
+        'SenderTelephone': {
+            'property': 'telephone',
+            'type': 'string',
+        },
+        'SenderEmail': {
+            'property': 'email',
+            'type': 'string',
+        },
+        'SenderAddress': {
+            'property': 'sender_address',
+            'type': 'entity',
+        },
+        'SenderAddressID': {
+            'property': 'address_id',
+            'type': 'integer',
+        },
+    }
+    SOAP_TYPE = 'ns1:SenderAddressType'
 
-class Sender(object):
-    # todo: dry out
     def __init__(self, client, name=None, telephone=None, email=None, sender_address=None, address_id=None):
-        self.client = client
-        self.type_name = 'ns1:SenderAddressType'
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.name = name
         self.telephone = telephone
         self.email = email
-        self.address_id = address_id
         self.sender_address = sender_address
+        self.address_id = address_id
 
     @classmethod
     def from_dict(cls, client, soap_dict):
@@ -584,33 +568,41 @@ class Sender(object):
             name=soap_dict.get('SenderName', None),
             telephone=soap_dict.get('SenderTelephone', None),
             email=soap_dict.get('SenderEmail', None),
-            address_id=soap_dict.get('SenderAddressID'),
             sender_address=Address.from_dict(
                 client,
                 client.shipping_client.dict(soap_dict.get('SenderAddress', None))
-            )
+            ),
+            address_id = soap_dict.get('SenderAddressID')
         )
 
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.shipping_client.factory.create(self.type_name)
-        suds_object.SenderName = self.name
-        suds_object.SenderTelephone = self.telephone
-        suds_object.SenderEmail = self.email
-        if self.address_id:
-            suds_object.SenderAddressID = self.address_id
-        else:
-            suds_object.SenderAddress = self.sender_address.to_soap_object()
-        return suds_object
 
+class Service(Entity):
+    SOAP_MAP = {
+        'ServiceID': {
+            'property': 'service_id',
+            'type': 'integer'
+        },
+        'Format': {
+            'property': 'service_format',
+            'type': 'string'
+        },
+        'Name': {
+            'property': 'name',
+            'type': 'string'
+        },
+        'Cost': {
+            'property': 'cost',
+            'type': 'currency',
+        },
+        'Courier': {
+            'property': 'courier',
+            'type': 'entity',
+        },
+    }
+    SOAP_TYPE = 'ns1:ServiceType'
 
-class Service(object):
-    # todo: dry out
     def __init__(self, client, service_id, service_format, name, cost, courier):
-        self.client = client
-        self.type_name = 'ns1:ServiceType'
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.service_id = service_id
         self.format = service_format
         self.name = name
@@ -634,15 +626,6 @@ class Service(object):
                 client.shipping_client.dict(soap_dict.get('Courier', None))
             )
         )
-
-    def to_soap_object(self):
-        """
-        Creates a SOAP client object representation of this entity.
-        """
-        suds_object = self.client.factory.shipping_client.create(self.type_name)
-        suds_object.CourierID = self.service_id
-        suds_object.CourierName = self.name
-        return suds_object
 
 
 class ShipmentRequest(Entity):
@@ -677,7 +660,6 @@ class ShipmentRequest(Entity):
             'type': 'boolean',
         }
     }
-
     SOAP_TYPE = 'ns1:ShipmentRequestType'
 
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None,
@@ -707,15 +689,69 @@ class ShipmentRequest(Entity):
         self._collection_date = self.validate_collection_date_object(collection_date)
 
 
-class ShipmentReturn(object):
-    # todo: dry out or move
+class ShipmentReturn(Entity):
+    SOAP_MAP = {
+        'ShipmentID': {
+            'property': 'shipment_id',
+            'type': 'string',
+        },
+        'ShipmentDocumentID': {
+            'property': 'shipment_document_id',
+            'type': 'string',
+        },
+        'CollectionID': {
+            'property': 'collection_id',
+            'type': 'string',
+        },
+        'ServiceID': {
+            'property': 'service_id',
+            'type': 'string',
+        },
+        'Parcels': {
+            'property': 'parcels',
+            'type': 'entityArray',
+        },
+        'ClientReference': {
+            'property': 'client_reference',
+            'type': 'string',
+        },
+        'RecipientAddress': {
+            'property': 'recipient_address',
+            'type': 'entity',
+        },
+        'IsFollowed': {
+            'property': 'is_followed',
+            'type': 'boolean',
+        },
+        'IsPrinted': {
+            'property': 'is_printed',
+            'type': 'boolean',
+        },
+        'IsDespatched': {
+            'property': 'is_despatched',
+            'type': 'boolean',
+        },
+        'IsDelivered': {
+            'property': 'is_delivered',
+            'type': 'boolean',
+        },
+        'IsCancelled': {
+            'property': 'is_cancelled',
+            'type': 'boolean',
+        },
+        'LabelsURL': {
+            'property': 'labels_url',
+            'type': 'boolean',
+        },
+    }
+    SOAP_TYPE = 'ns1:ShipmentReturnType'
+
     def __init__(self, client, shipment_id=None, shipment_document_id=None, collection_id=None,
                  service_id=None, parcels=None, client_reference=None, recipient_address=None,
                  is_followed=None, is_printed=None, is_despatched=None, is_delivered=None,
                  is_cancelled=None, labels_url=None):
+        super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.despatchbay_client = client
-        self.shipping_client = client.shipping_client
-        self.type_name = 'ns1:ShipmentReturnType'
         self.shipment_id = shipment_id
         self.shipment_document_id = shipment_document_id
         self.collection_id = collection_id

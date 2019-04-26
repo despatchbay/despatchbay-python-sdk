@@ -1,21 +1,19 @@
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 import suds
-from despatchbay.exceptions import AuthorizationException,\
-    ApiException, ConnectionException, RateLimitException
-from . import entities, documents_client
+from . import despatchbay_entities, documents_client, exceptions
 
 
 def handle_suds_fault(error):
     exception_info = error.args[0]
     if 'Unauthorized' in exception_info:
-        raise AuthorizationException('Invalid API credentials') from error
+        raise exceptions.AuthorizationException('Invalid API credentials') from error
     elif 'Could not connect to host' in exception_info:
-        raise ConnectionException('Failed to connect to the Despatch Bay API') from error
+        raise exceptions.ConnectionException('Failed to connect to the Despatch Bay API') from error
     elif 'Your access rate limit for this service has been exceeded' in exception_info:
-        raise RateLimitException(exception_info)
+        raise exceptions.RateLimitException(exception_info)
     else:
-        raise ApiException(error) from error
+        raise exceptions.ApiException(error) from error
 
 
 def try_except(fn):
@@ -59,31 +57,31 @@ class DespatchBaySDK(object):
         """
         Creates a dbp parcel entity
         """
-        return entities.Parcel(self, **kwargs)
+        return despatchbay_entities.Parcel(self, **kwargs)
 
     def address(self, **kwargs):
         """
         Creates a dbp address entity
         """
-        return entities.Address(self, **kwargs)
+        return despatchbay_entities.Address(self, **kwargs)
 
     def recipient(self, **kwargs):
         """
         Creates a dbp recipient address entity
         """
-        return entities.Recipient(self, **kwargs)
+        return despatchbay_entities.Recipient(self, **kwargs)
 
     def sender(self, **kwargs):
         """
         Creates a dbp sender address entity
         """
-        return entities.Sender(self, **kwargs)
+        return despatchbay_entities.Sender(self, **kwargs)
 
     def shipment_request(self, **kwargs):
         """
         Creates a dbp shipment entity
         """
-        return entities.ShipmentRequest(self, **kwargs)
+        return despatchbay_entities.ShipmentRequest(self, **kwargs)
 
     # Account Services
 
@@ -91,7 +89,7 @@ class DespatchBaySDK(object):
     def get_account(self):
         """Calls GetAccount from the Despatch Bay Account Service."""
         account_dict = self.account_client.dict(self.account_client.service.GetAccount())
-        return entities.Account.from_dict(
+        return despatchbay_entities.Account.from_dict(
             self,
             account_dict
         )
@@ -102,7 +100,7 @@ class DespatchBaySDK(object):
         Calls GetBalance from the Despatch Bay Account Service.
         """
         balance_dict = self.account_client.dict(self.account_client.service.GetAccountBalance())
-        return entities.AccountBalance.from_dict(
+        return despatchbay_entities.AccountBalance.from_dict(
             self,
             balance_dict
         )
@@ -115,7 +113,7 @@ class DespatchBaySDK(object):
         sender_addresses_dict_list = []
         for sender_address in self.account_client.service.GetSenderAddresses():
             sender_address_dict = self.account_client.dict(sender_address)
-            sender_addresses_dict_list.append(entities.Sender.from_dict(
+            sender_addresses_dict_list.append(despatchbay_entities.Sender.from_dict(
                 self,
                 sender_address_dict))
         return sender_addresses_dict_list
@@ -128,7 +126,7 @@ class DespatchBaySDK(object):
         service_list = []
         for account_service in self.account_client.service.GetServices():
             service_list.append(
-                entities.Service.from_dict(
+                despatchbay_entities.Service.from_dict(
                     self,
                     self.account_client.dict(account_service)
                 ))
@@ -142,7 +140,7 @@ class DespatchBaySDK(object):
         payment_methods = []
         for payment_method in self.account_client.service.GetPaymentMethods():
             payment_methods.append(
-                entities.PaymentMethod.from_dict(
+                despatchbay_entities.PaymentMethod.from_dict(
                     self,
                     self.account_client.dict(payment_method)
                 )
@@ -158,7 +156,7 @@ class DespatchBaySDK(object):
         Passing an automatic_topup_settings object takes priority over using individual arguments.
         """
         if not automatic_topup_settings_object:
-            automatic_topup_settings_object = entities.AutomaticTopupSettings(
+            automatic_topup_settings_object = despatchbay_entities.AutomaticTopupSettings(
                 self, minimum_balance, topup_amount, payment_method_id)
         return self.account_client.service.EnableAutomaticTopups(
             automatic_topup_settings_object.to_soap_object())
@@ -181,7 +179,7 @@ class DespatchBaySDK(object):
             self.addressing_client.service.FindAddress(
                 postcode, property_string
             ))
-        return entities.Address.from_dict(
+        return despatchbay_entities.Address.from_dict(
             self,
             found_address_dict
         )
@@ -194,7 +192,7 @@ class DespatchBaySDK(object):
         found_address_dict = self.addressing_client.dict(
             self.addressing_client.service.GetAddressByKey(key)
         )
-        return entities.Address.from_dict(
+        return despatchbay_entities.Address.from_dict(
             self,
             found_address_dict
         )
@@ -207,7 +205,7 @@ class DespatchBaySDK(object):
         address_keys_dict_list = []
         for soap_address_key in self.addressing_client.service.GetAddressKeysByPostcode(postcode):
             address_key_dict = self.account_client.dict(soap_address_key)
-            address_keys_dict_list.append(entities.AddressKey.from_dict(
+            address_keys_dict_list.append(despatchbay_entities.AddressKey.from_dict(
                 self,
                 address_key_dict))
         return address_keys_dict_list
@@ -223,7 +221,7 @@ class DespatchBaySDK(object):
         for available_service in self.shipping_client.service.GetAvailableServices(
                 shipment_request.to_soap_object()):
             available_service_dict = self.shipping_client.dict(available_service)
-            available_service_dict_list.append(entities.Service.from_dict(
+            available_service_dict_list.append(despatchbay_entities.Service.from_dict(
                 self,
                 available_service_dict))
         return available_service_dict_list
@@ -238,7 +236,8 @@ class DespatchBaySDK(object):
         available_collection_dates_list = []
         for collection_date in available_collection_dates_response:
             collection_date_dict = self.shipping_client.dict(collection_date)
-            available_collection_dates_list.append(entities.CollectionDate.from_dict(self, collection_date_dict))
+            available_collection_dates_list.append(
+                despatchbay_entities.CollectionDate.from_dict(self, collection_date_dict))
         return available_collection_dates_list
 
     @try_except
@@ -248,7 +247,7 @@ class DespatchBaySDK(object):
         """
         collection_dict = self.shipping_client.dict(
             self.shipping_client.service.GetCollection(collection_id))
-        return entities.Address.from_dict(
+        return despatchbay_entities.Address.from_dict(
             self,
             collection_dict
         )
@@ -262,7 +261,7 @@ class DespatchBaySDK(object):
         for found_collection in self.shipping_client.service.GetCollections():
             collection_dict = self.shipping_client.dict(found_collection)
             collections_dict_list.append(
-                entities.Collection.from_dict(
+                despatchbay_entities.Collection.from_dict(
                     self,
                     collection_dict
                 )
@@ -276,7 +275,7 @@ class DespatchBaySDK(object):
         """
         shipment_dict = self.shipping_client.dict(
             self.shipping_client.service.GetShipment(shipment_id))
-        return entities.ShipmentReturn.from_dict(
+        return despatchbay_entities.ShipmentReturn.from_dict(
             self,
             shipment_dict
         )
@@ -299,7 +298,7 @@ class DespatchBaySDK(object):
         for booked_shipment in self.shipping_client.service.BookShipments(array_of_shipment_id):
             booked_shipment_dict = self.shipping_client.dict(booked_shipment)
             booked_shipments_list.append(
-                entities.ShipmentReturn.from_dict(
+                despatchbay_entities.ShipmentReturn.from_dict(
                     self,
                     booked_shipment_dict
                 )
