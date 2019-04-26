@@ -50,7 +50,6 @@ class Account(Entity):
         'AccountBalance': {
             'property': 'balance',
             'type': 'entity',
-            # 'entityClass': 'DespatchBay\Entity\AccountBalance'
         }
     }
     SOAP_TYPE = 'ns1:AccountType'
@@ -524,7 +523,6 @@ class Recipient(Entity):
 
 
 class Sender(Entity):
-    # todo handle sender address id
     SOAP_MAP = {
         'SenderName': {
             'property': 'name',
@@ -554,7 +552,10 @@ class Sender(Entity):
         self.name = name
         self.telephone = telephone
         self.email = email
-        self.sender_address = sender_address
+        if sender_address:
+            self.sender_address = sender_address
+        else:
+            self.sender_address = Address(client)
         self.address_id = address_id
 
     @classmethod
@@ -572,8 +573,14 @@ class Sender(Entity):
                 client,
                 client.shipping_client.dict(soap_dict.get('SenderAddress', None))
             ),
-            address_id = soap_dict.get('SenderAddressID')
+            address_id=soap_dict.get('SenderAddressID')
         )
+
+    def to_soap_object(self):
+        object = super().to_soap_object()
+        if object.SenderAddressID:
+            object.SenderAddress = None
+        return object
 
 
 class Service(Entity):

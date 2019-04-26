@@ -5,7 +5,7 @@ from . import despatchbay_entities, documents_client, exceptions
 
 
 def handle_suds_fault(error):
-    exception_info = error.args[0]
+    exception_info = error.args[0].decode()
     if 'Unauthorized' in exception_info:
         raise exceptions.AuthorizationException('Invalid API credentials') from error
     elif 'Could not connect to host' in exception_info:
