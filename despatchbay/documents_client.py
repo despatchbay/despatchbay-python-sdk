@@ -1,9 +1,23 @@
+"""
+Classes for working with the despatchbay documents api
+
+https://github.com/despatchbay/despatchbay-api-v15/wiki/Documents-API
+"""
+
 from urllib.parse import urlencode
-from . import exceptions
-import requests
 import base64
 
-class Document(object):
+import requests
+
+from . import exceptions
+
+
+class Document:
+    """
+    A document (label/manifest) in the despatchbay documents api.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Documents-API
+    """
     def __init__(self, data):
         if self.is_pdf(data):
             self.data = data
@@ -38,7 +52,12 @@ class Document(object):
             document_file.write(self.data)
 
 
-class DocumentsClient(object):
+class DocumentsClient:
+    """
+    Client for the despatchbay documents api
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Documents-API
+    """
     def __init__(self, api_url='http://api.despatchbay.com/documents/v1'):
         self.api_url = api_url
 
@@ -49,16 +68,15 @@ class DocumentsClient(object):
         """
         if code == 200:
             return True
-        elif code == 400:
+        if code == 400:
             raise exceptions.InvalidArgumentException('The PDF Labels API was unable to process the request')
-        elif code == 401:
+        if code == 401:
             raise exceptions.AuthorizationException('Unauthorized')
-        elif code == 402:
+        if code == 402:
             raise exceptions.PaymentException('Insufficient Despatch Bay account balance')
-        elif code == 404:
+        if code == 404:
             raise exceptions.ApiException('Unknown shipment ID')
-        else:
-            raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
+        raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
 
     def fetch_shipment_labels(self, ship_collect_ids, layout=None, label_format=None, label_dpi=None):
         """
