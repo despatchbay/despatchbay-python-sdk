@@ -1,3 +1,9 @@
+"""
+Client for the Despatchbay v15 api
+https://github.com/despatchbay/despatchbay-api-v15/wiki
+"""
+
+
 from suds.client import Client
 from suds.transport.http import HttpAuthenticated
 import suds
@@ -5,31 +11,37 @@ from . import despatchbay_entities, documents_client, exceptions
 
 
 def handle_suds_fault(error):
+    """
+    Throws despatchbaysdk exceptions in response to suds exceptions
+    """
     exception_info = error.args[0].decode()
     if 'Unauthorized' in exception_info:
         raise exceptions.AuthorizationException('Invalid API credentials') from error
-    elif 'Could not connect to host' in exception_info:
+    if 'Could not connect to host' in exception_info:
         raise exceptions.ConnectionException('Failed to connect to the Despatch Bay API') from error
-    elif 'Your access rate limit for this service has been exceeded' in exception_info:
+    if 'Your access rate limit for this service has been exceeded' in exception_info:
         raise exceptions.RateLimitException(exception_info)
-    else:
-        raise exceptions.ApiException(error) from error
+    raise exceptions.ApiException(error) from error
 
 
-def try_except(fn):
+def try_except(function):
     """
     A decorator to catch suds exceptions
     """
     def wrapped(*args, **kwargs):
         try:
-            return fn(*args, **kwargs)
+            return function(*args, **kwargs)
         except suds.WebFault as detail:
             handle_suds_fault(detail)
     return wrapped
 
 
-class DespatchBaySDK(object):
+class DespatchBaySDK:
+    """
+    Client for despatchbay v15 api.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki
+    """
     def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', api_version='15'):
         soap_url_template = 'http://{}/soap/v{}/{}?wsdl'
         documents_url = 'http://{}/documents/v1'.format(api_domain)
@@ -49,6 +61,9 @@ class DespatchBaySDK(object):
 
     @staticmethod
     def create_transport(username, password):
+        """
+        HTTP transport providing authentication for suds.
+        """
         return HttpAuthenticated(username=username, password=password)
 
     # Shipping entities
