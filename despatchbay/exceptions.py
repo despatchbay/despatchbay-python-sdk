@@ -1,27 +1,29 @@
+"""Despatchbay SDK exceptions"""
+
+
 class Error(Exception):
     """Base class for other exceptions"""
-    pass
 
 
 class InvalidArgumentException(Error):
-    pass
+    """Exception to raise when invalid arguments are passed."""
 
 
 class AuthorizationException(Error):
-    pass
+    """Exception to raise when a 401 error is returned."""
 
 
 class PaymentException(Error):
-    pass
+    """Exception to raise when an operation fails due to insufficient funds."""
 
 
 class ApiException(Error):
-    pass
+    """General API exception"""
 
 
 class ConnectionException(Error):
-    pass
+    """General connection error exception."""
 
 
 class RateLimitException(Error):
-    pass
+    """Exception to raise when an operation fails due rate limits."""
