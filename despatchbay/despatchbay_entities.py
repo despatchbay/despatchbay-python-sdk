@@ -1,5 +1,11 @@
-class Entity(object):
+"""
+Entities relating to types in the Despatchbay v15 api
+https://github.com/despatchbay/despatchbay-api-v15/wiki
+"""
 
+
+class Entity:
+    """Base class for Despatchbay entities"""
     def __init__(self, soap_type, soap_client, soap_map):
         self.soap_type = soap_type
         self.soap_client = soap_client
@@ -38,6 +44,11 @@ class Entity(object):
 
 
 class Account(Entity):
+    """
+    Represents a Despactchbay API AccountType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Account-Service#accounttype
+    """
     SOAP_MAP = {
         'AccountID': {
             'property': 'account_id',
@@ -78,6 +89,11 @@ class Account(Entity):
 
 
 class AccountBalance(Entity):
+    """
+    Represents a Despactchbay API AccountBalanceType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Account-Service#accountbalancetype
+    """
     SOAP_MAP = {
         'Balance': {
             'property': 'balance',
@@ -109,7 +125,11 @@ class AccountBalance(Entity):
 
 
 class Address(Entity):
+    """
+    Represents a Despactchbay API AddressType entity.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Account-Service#addresstype
+    """
     SOAP_MAP = {
         'CompanyName': {
             'property': 'company_name',
@@ -172,6 +192,11 @@ class Address(Entity):
 
 
 class AddressKey(Entity):
+    """
+    Represents a Despactchbay API AddressKeyType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Addressing-Service#addresskeytype
+    """
     SOAP_MAP = {
         'Key': {
             'property': 'key',
@@ -203,6 +228,11 @@ class AddressKey(Entity):
 
 
 class AutomaticTopupSettings(Entity):
+    """
+    Represents a Despactchbay API AutomaticTopupSettings entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Account-Service#automatictopupsettings
+    """
     SOAP_MAP = {
         "MinimumBalance": {
             "property": "minimum_balance",
@@ -240,7 +270,11 @@ class AutomaticTopupSettings(Entity):
 
 
 class Collection(Entity):
+    """
+    Represents a Despactchbay API CollectionType entity.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#collectionreturntype
+    """
     SOAP_MAP = {
         "CollectionID": {
             "property": "collection_id",
@@ -318,6 +352,11 @@ class Collection(Entity):
 
 
 class CollectionDate(Entity):
+    """
+    Represents a Despactchbay API CollectionDateType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#collectiondatetype
+    """
     SOAP_MAP = {
         "CollectionDate": {
             "property": "date",
@@ -343,7 +382,11 @@ class CollectionDate(Entity):
 
 
 class Courier(Entity):
+    """
+    Represents a Despactchbay API CourierType entity.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#couriertype
+    """
     SOAP_MAP = {
         'CourierID': {
             'property': 'courier_id',
@@ -375,7 +418,11 @@ class Courier(Entity):
 
 
 class Parcel(Entity):
+    """
+    Represents a Despactchbay API ParcelType entity.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#parceltype
+    """
     SOAP_MAP = {
         'Weight': {
             'property': 'weight',
@@ -439,7 +486,11 @@ class Parcel(Entity):
 
 
 class PaymentMethod(Entity):
+    """
+    Represents a Despactchbay API PaymentMethodType entity.
 
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Account-Service#paymentmethodtype
+    """
     SOAP_MAP = {
         'PaymentMethodID': {
             'property': 'payment_method_id',
@@ -477,6 +528,11 @@ class PaymentMethod(Entity):
 
 
 class Recipient(Entity):
+    """
+    Represents a Despactchbay API RecipientAddressType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#recipientaddresstype
+    """
     SOAP_MAP = {
         'RecipientName': {
             'property': 'name',
@@ -523,6 +579,11 @@ class Recipient(Entity):
 
 
 class Sender(Entity):
+    """
+    Represents a Despactchbay API SenderAddressType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#senderaddresstype
+    """
     SOAP_MAP = {
         'SenderName': {
             'property': 'name',
@@ -577,13 +638,23 @@ class Sender(Entity):
         )
 
     def to_soap_object(self):
-        object = super().to_soap_object()
-        if object.SenderAddressID:
-            object.SenderAddress = None
+        """
+        Creates a SOAP client object representation of this entity.
+
+        Removes sender address property if a sender address id is provided.
+        """
+        soap_object = super().to_soap_object()
+        if soap_object.SenderAddressID:
+            soap_object.SenderAddress = None
         return object
 
 
 class Service(Entity):
+    """
+    Represents a Despactchbay API ServiceType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#servicetype
+    """
     SOAP_MAP = {
         'ServiceID': {
             'property': 'service_id',
@@ -636,6 +707,11 @@ class Service(Entity):
 
 
 class ShipmentRequest(Entity):
+    """
+    Represents a Despactchbay API ShipmentRequest entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#shipmentrequesttype
+    """
     SOAP_MAP = {
         'ServiceID': {
             'property': 'service_id',
@@ -682,21 +758,35 @@ class ShipmentRequest(Entity):
         self.follow_shipment = follow_shipment
 
     def validate_collection_date_object(self, collection_date):
+        """
+        Converts a string timestamp to a CollectionDate object.
+        """
         if isinstance(collection_date, str):
             return CollectionDate(self._despatchbay_client, date=collection_date)
-        else:
-            return collection_date
+        return collection_date
 
     @property
     def collection_date(self):
+        """
+        Returns the private attribute collection_date
+        """
         return self._collection_date
 
     @collection_date.setter
     def collection_date(self, collection_date):
+        """
+        Allows the collection date to be set from just a timestamp string but limits the
+        type of the _collection_date attribute to a CollectionDate object.
+        """
         self._collection_date = self.validate_collection_date_object(collection_date)
 
 
 class ShipmentReturn(Entity):
+    """
+    Represents a Despactchbay API ShipmentReturnType entity.
+
+    https://github.com/despatchbay/despatchbay-api-v15/wiki/Shipping-Service#shipmentreturntype
+    """
     SOAP_MAP = {
         'ShipmentID': {
             'property': 'shipment_id',
