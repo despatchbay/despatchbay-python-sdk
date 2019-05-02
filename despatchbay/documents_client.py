@@ -19,18 +19,7 @@ class Document:
     https://github.com/despatchbay/despatchbay-api-v15/wiki/Documents-API
     """
     def __init__(self, data):
-        if self.is_pdf(data):
-            self.data = data
-        else:
-            raise TypeError("File returned from api is not a valid PDF.")
-
-    @staticmethod
-    def is_pdf(data):
-        """
-        Performs a rudimentary check to see if the data APPEARS to be a
-        valid POF file.
-        """
-        return data[0:4].decode() == '%PDF'
+        self.data = data
 
     def get_raw(self):
         """
@@ -40,9 +29,9 @@ class Document:
 
     def get_base64(self):
         """
-        Base 64 encodes the PDF data before returning it.
+        Base 64 encodes the document data before returning it.
         """
-        return base64.b64decode(self.data)
+        return base64.b64encode(self.data)
 
     def download(self, path):
         """
@@ -62,14 +51,15 @@ class DocumentsClient:
         self.api_url = api_url
 
     @staticmethod
-    def handle_response_code(code):
+    def handle_response_code(code, response):
         """
         Returns true if code is 200, otherwise raises an appropriate exception.
         """
         if code == 200:
             return True
         if code == 400:
-            raise exceptions.InvalidArgumentException('The PDF Labels API was unable to process the request')
+            raise exceptions.InvalidArgumentException(
+                'The Documents API was unable to process the request: {}'.format(response))
         if code == 401:
             raise exceptions.AuthorizationException('Unauthorized')
         if code == 402:
@@ -78,17 +68,17 @@ class DocumentsClient:
             raise exceptions.ApiException('Unknown shipment ID')
         raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
 
-    def fetch_shipment_labels(self, ship_collect_ids, layout=None, label_format=None, label_dpi=None):
+    def fetch_shipment_labels(self, shipment_document_ids, label_layout=None, label_format=None, label_dpi=None):
         """
-         Returns a pdf entity of the shipment labels identified by ship_collect_ids.
+         Returns a document entity of the shipment labels identified by ship_collect_ids.
         """
-        if isinstance(ship_collect_ids, list):
-            shipment_string = ','.join(ship_collect_ids)
+        if isinstance(shipment_document_ids, list):
+            shipment_string = ','.join(shipment_document_ids)
         else:
-            shipment_string = ship_collect_ids
+            shipment_string = shipment_document_ids
         query_dict = {}
-        if layout:
-            query_dict['layout'] = layout
+        if label_layout:
+            query_dict['layout'] = label_layout
         if label_format:
             query_dict['format'] = label_format
             if label_format == 'png_base64' and label_dpi:
@@ -99,14 +89,16 @@ class DocumentsClient:
             query_string = urlencode(query_dict)
             label_request_url = label_request_url + '?' + query_string
         response = requests.get(label_request_url)
-        self.handle_response_code(response.status_code)
+        self.handle_response_code(response.status_code, response.text)
         return Document(response.content)
 
-    def fetch_manifest(self, collection_id):
+    def fetch_manifest(self, collection_document_id, manifest_format=None):
         """
-         Returns a pdf entity of the shipment manifest identified by collection_id.
+         Returns a document entity of the shipment manifest identified by collection_id.
         """
-        manifest_request_url = '{}/manifest/{}'.format(self.api_url, collection_id)
+        manifest_request_url = '{}/manifest/{}'.format(self.api_url, collection_document_id)
+        if manifest_format:
+            manifest_request_url = '{}?format={}'.format(manifest_request_url, manifest_format)
         response = requests.get(manifest_request_url)
-        self.handle_response_code(response.status_code)
+        self.handle_response_code(response.status_code, response.text)
         return Document(response.content)

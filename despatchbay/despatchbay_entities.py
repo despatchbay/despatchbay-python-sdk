@@ -42,6 +42,12 @@ class Entity:
                 )
         return suds_object
 
+    def __str__(self):
+        return str(self.to_soap_object())
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Account(Entity):
     """
@@ -61,6 +67,7 @@ class Account(Entity):
         'AccountBalance': {
             'property': 'balance',
             'type': 'entity',
+            'soap_type': 'ns1:AccountBalanceType',
         }
     }
     SOAP_TYPE = 'ns1:AccountType'
@@ -548,7 +555,8 @@ class Recipient(Entity):
         },
         'RecipientAddress': {
             'property': 'recipient_address',
-            'type': 'entity'
+            'type': 'entity',
+            'soap_type': 'ns1:RecipientAddressType',
         },
     }
     SOAP_TYPE = 'ns1:RecipientAddressType'
@@ -600,6 +608,8 @@ class Sender(Entity):
         'SenderAddress': {
             'property': 'sender_address',
             'type': 'entity',
+            'soap_type': 'ns1:SenderAddress',
+
         },
         'SenderAddressID': {
             'property': 'address_id',
@@ -646,7 +656,7 @@ class Sender(Entity):
         soap_object = super().to_soap_object()
         if soap_object.SenderAddressID:
             soap_object.SenderAddress = None
-        return object
+        return soap_object
 
 
 class Service(Entity):
@@ -675,6 +685,8 @@ class Service(Entity):
         'Courier': {
             'property': 'courier',
             'type': 'entity',
+            'soap_type': 'ns1:CourierType',
+
         },
     }
     SOAP_TYPE = 'ns1:ServiceType'
@@ -729,14 +741,17 @@ class ShipmentRequest(Entity):
         'CollectionDate': {
             'property': 'collection_date',
             'type': 'entity',
+            'soap_type': 'ns1:CollectionDateType',
         },
         'RecipientAddress': {
             'property': 'recipient_address',
             'type': 'entity',
+            'soap_type': 'ns1:RecipientAddressType',
         },
         'SenderAddress': {
             'property': 'sender_address',
             'type': 'entity',
+            'soap_type': 'ns1:SenderAddressType',
         },
         'FollowShipment': {
             'property': 'follow_shipment',
@@ -800,6 +815,10 @@ class ShipmentReturn(Entity):
             'property': 'collection_id',
             'type': 'string',
         },
+        'CollectionDocumentID': {
+            'property': 'collection_document_id',
+            'type': 'string',
+        },
         'ServiceID': {
             'property': 'service_id',
             'type': 'string',
@@ -807,6 +826,7 @@ class ShipmentReturn(Entity):
         'Parcels': {
             'property': 'parcels',
             'type': 'entityArray',
+            'soap_type': 'ns1:ArrayOfParcelType',
         },
         'ClientReference': {
             'property': 'client_reference',
@@ -815,6 +835,7 @@ class ShipmentReturn(Entity):
         'RecipientAddress': {
             'property': 'recipient_address',
             'type': 'entity',
+            'soap_type': 'ns1:RecipientAddressType',
         },
         'IsFollowed': {
             'property': 'is_followed',
@@ -844,14 +865,15 @@ class ShipmentReturn(Entity):
     SOAP_TYPE = 'ns1:ShipmentReturnType'
 
     def __init__(self, client, shipment_id=None, shipment_document_id=None, collection_id=None,
-                 service_id=None, parcels=None, client_reference=None, recipient_address=None,
-                 is_followed=None, is_printed=None, is_despatched=None, is_delivered=None,
-                 is_cancelled=None, labels_url=None):
+                 collection_document_id=None, service_id=None, parcels=None, client_reference=None,
+                 recipient_address=None, is_followed=None, is_printed=None, is_despatched=None,
+                 is_delivered=None, is_cancelled=None, labels_url=None):
         super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
         self.despatchbay_client = client
         self.shipment_id = shipment_id
         self.shipment_document_id = shipment_document_id
         self.collection_id = collection_id
+        self.collection_document_id = collection_document_id
         self.service_id = service_id
         self.parcels = parcels
         self.client_reference = client_reference
@@ -882,6 +904,7 @@ class ShipmentReturn(Entity):
             shipment_id=soap_dict.get('ShipmentID'),
             shipment_document_id=soap_dict.get('ShipmentDocumentID'),
             collection_id=soap_dict.get('CollectionID'),
+            collection_document_id=soap_dict.get('CollectionDocumentID'),
             service_id=soap_dict.get('ServiceID'),
             parcels=parcel_array,
             client_reference=soap_dict.get('ClientReference'),

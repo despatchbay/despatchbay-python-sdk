@@ -14,14 +14,34 @@ def handle_suds_fault(error):
     """
     Throws despatchbaysdk exceptions in response to suds exceptions
     """
-    exception_info = error.args[0].decode()
+    try:
+        exception_info = error.args[0].decode()
+    except AttributeError:
+        exception_info = error.args[0]
     if 'Unauthorized' in exception_info:
         raise exceptions.AuthorizationException('Invalid API credentials') from error
     if 'Could not connect to host' in exception_info:
         raise exceptions.ConnectionException('Failed to connect to the Despatch Bay API') from error
     if 'Your access rate limit for this service has been exceeded' in exception_info:
         raise exceptions.RateLimitException(exception_info)
+    # Re-raise general suds exceptions as exceptions.ApiException
     raise exceptions.ApiException(error) from error
+
+
+def handle_suds_generic_fault(error):
+    """
+    Throws despatchbaysdk exceptions in response to suds generic 'Exception' exceptions
+    """
+    try:
+        exception_info = error.args[0].decode()
+    except AttributeError:
+        exception_info = error.args[0]
+    if 401 in exception_info:
+        raise exceptions.AuthorizationException('Invalid API credentials') from error
+    if 429 in exception_info:
+        raise exceptions.RateLimitException(exception_info[1])
+    # Re-raise original error
+    raise error
 
 
 def try_except(function):
@@ -33,6 +53,9 @@ def try_except(function):
             return function(*args, **kwargs)
         except suds.WebFault as detail:
             handle_suds_fault(detail)
+        except Exception as detail:
+            handle_suds_generic_fault(detail)
+
     return wrapped
 
 
@@ -338,14 +361,14 @@ class DespatchBaySDK:
 
     # Documents services
 
-    def fetch_shipment_labels(self, document_id, **kwargs):
+    def fetch_shipment_labels(self, shipment_document_id, **kwargs):
         """
         Fetches labels from the Despatch Bay documents API.
         """
-        return self.pdf_client.fetch_shipment_labels(document_id, **kwargs)
+        return self.pdf_client.fetch_shipment_labels(shipment_document_id, **kwargs)
 
-    def fetch_manifest(self, collection_id):
+    def fetch_manifest(self, collection_document_id, **kwargs):
         """
         Fetches manifests from the Despatch Bay documents API.
         """
-        return self.pdf_client.fetch_manifest(collection_id)
+        return self.pdf_client.fetch_manifest(collection_document_id, **kwargs)
