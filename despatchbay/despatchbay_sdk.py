@@ -65,13 +65,17 @@ class DespatchBaySDK:
 
     https://github.com/despatchbay/despatchbay-api-v15/wiki
     """
-    def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', api_version='15'):
+    def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', despactchbay_api_version=15, documents_api_version=1):
+        if despactchbay_api_version < 15:
+            raise exceptions.ApiException("DespatchBay API version must be 15 or higher.")
+        if documents_api_version < 1:
+            raise exceptions.ApiException("Documents API version must be 1 or higher.")
         soap_url_template = 'http://{}/soap/v{}/{}?wsdl'
-        documents_url = 'http://{}/documents/v1'.format(api_domain)
-        account_url = soap_url_template.format(api_domain, api_version, 'account')
-        shipping_url = soap_url_template.format(api_domain, api_version, 'shipping')
-        addressing_url = soap_url_template.format(api_domain, api_version, 'addressing')
-        tracking_url = soap_url_template.format(api_domain, api_version, 'tracking')
+        documents_url = 'http://{}/documents/v{}'.format(api_domain, documents_api_version)
+        account_url = soap_url_template.format(api_domain, despactchbay_api_version, 'account')
+        shipping_url = soap_url_template.format(api_domain, despactchbay_api_version, 'shipping')
+        addressing_url = soap_url_template.format(api_domain, despactchbay_api_version, 'addressing')
+        tracking_url = soap_url_template.format(api_domain, despactchbay_api_version, 'tracking')
         self.account_client = Client(
             account_url, transport=self.create_transport(api_user, api_key))
         self.addressing_client = Client(
@@ -285,7 +289,7 @@ class DespatchBaySDK:
         """
         collection_dict = self.shipping_client.dict(
             self.shipping_client.service.GetCollection(collection_id))
-        return despatchbay_entities.Address.from_dict(
+        return despatchbay_entities.Collection.from_dict(
             self,
             collection_dict
         )
