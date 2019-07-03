@@ -42,11 +42,8 @@ class Entity:
                 )
         return suds_object
 
-    def __str__(self):
-        return str(self.to_soap_object())
-
     def __repr__(self):
-        return self.__str__()
+        return str(self.to_soap_object())
 
 
 class Account(Entity):
@@ -217,7 +214,7 @@ class AddressKey(Entity):
     SOAP_TYPE = 'ns1:AddressKeyType'
 
     def __init__(self, client, key, address):
-        super().__init__(self.SOAP_TYPE, client, self.SOAP_MAP)
+        super().__init__(self.SOAP_TYPE, client.addressing_client, self.SOAP_MAP)
         self.key = key
         self.address = address
 
@@ -321,6 +318,7 @@ class Collection(Entity):
     def __init__(self, client, collection_id=None, document_id=None, collection_type=None, date=None,
                  sender_address=None, collection_courier=None, labels_url=None, manifest_url=None):
         super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
+        self.despatchbay_client = client
         self.collection_id = collection_id
         self.document_id = document_id
         self.collection_type = collection_type
@@ -343,19 +341,31 @@ class Collection(Entity):
             collection_type=soap_dict.get('CollectionType'),
             date=CollectionDate.from_dict(
                 client,
-                client.dict(soap_dict.get('CollectionDate'))
+                client.shipping_client.dict(soap_dict.get('CollectionDate'))
             ),
             sender_address=Sender.from_dict(
                 client,
-                client.dict(soap_dict.get('SenderAddress', None))
+                client.shipping_client.dict(soap_dict.get('SenderAddress', None))
             ),
             collection_courier=Courier.from_dict(
                 client,
-                client.dict(soap_dict.get('Courier', None))
+                client.shipping_client.dict(soap_dict.get('Courier', None))
             ),
             labels_url=soap_dict.get('LabelsURL', None),
             manifest_url=soap_dict.get('Manifest', None)
         )
+
+    def get_labels(self, **kwargs):
+        """
+        Fetches label pdf through the Despatch Bay API client.
+        """
+        return self.despatchbay_client.fetch_shipment_labels(self.document_id, **kwargs)
+
+    def get_manifest(self, **kwargs):
+        """
+        Fetches menifest pdf through the Despatch Bay API client.
+        """
+        return self.despatchbay_client.fetch_manifest(self.document_id, **kwargs)
 
 
 class CollectionDate(Entity):
@@ -465,7 +475,6 @@ class Parcel(Entity):
     def __init__(self, client, weight=None, length=None, width=None, height=None,
                  contents=None, value=None, tracking_number=None):
         super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
-        self.client = client
         self.weight = weight
         self.length = length
         self.width = width
@@ -763,7 +772,7 @@ class ShipmentRequest(Entity):
     def __init__(self, client, service_id=None, parcels=None, client_reference=None, collection_date=None,
                  sender_address=None, recipient_address=None, follow_shipment=None):
         super().__init__(self.SOAP_TYPE, client.shipping_client, self.SOAP_MAP)
-        self._despatchbay_client = client
+        self.despatchbay_client = client
         self.service_id = service_id
         self.parcels = parcels
         self.client_reference = client_reference
@@ -777,7 +786,7 @@ class ShipmentRequest(Entity):
         Converts a string timestamp to a CollectionDate object.
         """
         if isinstance(collection_date, str):
-            return CollectionDate(self._despatchbay_client, date=collection_date)
+            return CollectionDate(self.despatchbay_client, date=collection_date)
         return collection_date
 
     @property
@@ -919,6 +928,18 @@ class ShipmentReturn(Entity):
             is_cancelled=soap_dict.get('IsCancelled'),
             labels_url=soap_dict.get('LabelsURL', None)
         )
+
+    def book(self):
+        """
+        Makes a BookShipment request through the Despatch Bay API client.
+        """
+        book_return = self.despatchbay_client.book_shipments([self.shipment_id])
+        if book_return:
+            self.shipment_document_id = book_return[0].shipment_document_id
+            self.collection_id = book_return[0].collection_id
+            self.collection_document_id = book_return[0].collection_document_id
+            self.labels_url = book_return[0].labels_url
+        return book_return[0]
 
     def cancel(self):
         """
