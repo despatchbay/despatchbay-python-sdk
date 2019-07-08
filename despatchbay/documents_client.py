@@ -68,14 +68,15 @@ class DocumentsClient:
             raise exceptions.ApiException('Unknown shipment ID')
         raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
 
-    def fetch_shipment_labels(self, shipment_document_ids, label_layout=None, label_format=None, label_dpi=None):
+    def fetch_shipment_labels(self, document_ids, label_layout=None, label_format=None, label_dpi=None):
         """
-         Returns a document entity of the shipment labels identified by ship_collect_ids.
+         Returns a document entity of the shipment labels identified by document_ids which can be a comma
+         separated string of shipment IDs.
         """
-        if isinstance(shipment_document_ids, list):
-            shipment_string = ','.join(shipment_document_ids)
+        if isinstance(document_ids, list):
+            shipment_string = ','.join(document_ids)
         else:
-            shipment_string = shipment_document_ids
+            shipment_string = document_ids
         query_dict = {}
         if label_layout:
             query_dict['layout'] = label_layout

@@ -9,6 +9,8 @@ from suds.transport.http import HttpAuthenticated
 import suds
 from . import despatchbay_entities, documents_client, exceptions
 
+MIN_SOAP_API_VERSION = 15
+MIN_DOCUMENTS_API_VERSION = 1
 
 def handle_suds_fault(error):
     """
@@ -65,10 +67,10 @@ class DespatchBaySDK:
 
     https://github.com/despatchbay/despatchbay-api-v15/wiki
     """
-    def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', despactchbay_api_version=15, documents_api_version=1):
-        if despactchbay_api_version < 15:
+    def __init__(self, api_user, api_key, api_domain='api.despatchbay.com', despactchbay_api_version=MIN_SOAP_API_VERSION, documents_api_version=MIN_DOCUMENTS_API_VERSION):
+        if despactchbay_api_version < MIN_SOAP_API_VERSION:
             raise exceptions.ApiException("DespatchBay API version must be 15 or higher.")
-        if documents_api_version < 1:
+        if documents_api_version < MIN_DOCUMENTS_API_VERSION:
             raise exceptions.ApiException("Documents API version must be 1 or higher.")
         soap_url_template = 'http://{}/soap/v{}/{}?wsdl'
         documents_url = 'http://{}/documents/v{}'.format(api_domain, documents_api_version)
@@ -365,11 +367,11 @@ class DespatchBaySDK:
 
     # Documents services
 
-    def fetch_shipment_labels(self, shipment_document_id, **kwargs):
+    def fetch_shipment_labels(self, document_ids, **kwargs):
         """
         Fetches labels from the Despatch Bay documents API.
         """
-        return self.pdf_client.fetch_shipment_labels(shipment_document_id, **kwargs)
+        return self.pdf_client.fetch_shipment_labels(document_ids, **kwargs)
 
     def fetch_manifest(self, collection_document_id, **kwargs):
         """
