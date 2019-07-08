@@ -359,13 +359,13 @@ class Collection(Entity):
         """
         Fetches label pdf through the Despatch Bay API client.
         """
-        return self.despatchbay_client.fetch_shipment_labels(self.document_id, **kwargs)
+        return self.despatchbay_client.get_labels(self.document_id, **kwargs)
 
     def get_manifest(self, **kwargs):
         """
         Fetches menifest pdf through the Despatch Bay API client.
         """
-        return self.despatchbay_client.fetch_manifest(self.document_id, **kwargs)
+        return self.despatchbay_client.get_manifest(self.document_id, **kwargs)
 
 
 class CollectionDate(Entity):
@@ -954,4 +954,4 @@ class ShipmentReturn(Entity):
         """
         Fetches label pdf through the Despatch Bay API client.
         """
-        return self.despatchbay_client.fetch_shipment_labels(self.shipment_document_id, **kwargs)
+        return self.despatchbay_client.get_labels(self.shipment_document_id, **kwargs)

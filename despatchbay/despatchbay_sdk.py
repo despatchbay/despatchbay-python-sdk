@@ -367,14 +367,14 @@ class DespatchBaySDK:
 
     # Documents services
 
-    def fetch_shipment_labels(self, document_ids, **kwargs):
+    def get_labels(self, document_ids, **kwargs):
         """
         Fetches labels from the Despatch Bay documents API.
         """
-        return self.pdf_client.fetch_shipment_labels(document_ids, **kwargs)
+        return self.pdf_client.get_labels(document_ids, **kwargs)
 
-    def fetch_manifest(self, collection_document_id, **kwargs):
+    def get_manifest(self, collection_document_id, **kwargs):
         """
         Fetches manifests from the Despatch Bay documents API.
         """
-        return self.pdf_client.fetch_manifest(collection_document_id, **kwargs)
+        return self.pdf_client.get_manifest(collection_document_id, **kwargs)

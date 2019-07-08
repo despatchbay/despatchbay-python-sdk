@@ -68,10 +68,10 @@ class DocumentsClient:
             raise exceptions.ApiException('Unknown shipment ID')
         raise exceptions.ApiException('An unexpected error occurred (HTTP {})'.format(code))
 
-    def fetch_shipment_labels(self, document_ids, label_layout=None, label_format=None, label_dpi=None):
+    def get_labels(self, document_ids, label_layout=None, label_format=None, label_dpi=None):
         """
-         Returns a document entity of the shipment labels identified by document_ids which can be a comma
-         separated string of shipment IDs.
+         Returns a document entity of the shipment labels identified by the document_ids arg
+         which can be a comma separated string of shipment IDs or a single collection ID.
         """
         if isinstance(document_ids, list):
             shipment_string = ','.join(document_ids)
@@ -93,9 +93,9 @@ class DocumentsClient:
         self.handle_response_code(response.status_code, response.text)
         return Document(response.content)
 
-    def fetch_manifest(self, collection_document_id, manifest_format=None):
+    def get_manifest(self, collection_document_id, manifest_format=None):
         """
-         Returns a document entity of the shipment manifest identified by collection_id.
+         Returns a document entity of the shipment manifest identified by collection_document_id.
         """
         manifest_request_url = '{}/manifest/{}'.format(self.api_url, collection_document_id)
         if manifest_format:
