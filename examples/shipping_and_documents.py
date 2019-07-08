@@ -59,5 +59,5 @@ shipment_request.collection_date = dates[0]
 added_shipment = client.add_shipment(shipment_request)
 client.book_shipments([added_shipment])
 shipment_return = client.get_shipment(added_shipment)
-label_pdf = client.fetch_shipment_labels(shipment_return.shipment_document_id)
+label_pdf = client.get_labels(shipment_return.shipment_document_id)
 label_pdf.download('./new_label.pdf')
